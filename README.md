@@ -1,5 +1,7 @@
 # LeGroundstate
 
+[![ci](https://github.com/d4vid-le/legroundstate/actions/workflows/ci.yml/badge.svg)](https://github.com/d4vid-le/legroundstate/actions/workflows/ci.yml)
+
 **An experiment in latent-space energy-based routing for KiCad.**
 
 > **Name:** LeGroundstate. The repository, Python package, and CLI use the lowercase form
@@ -124,6 +126,8 @@ scripts/
   fetch_enso.sh        fetch pinned upstream Enso (gitignored, no license)
   bench_mlx.py         reproducible MLX throughput benchmark
 src/legroundstate/     implementation (empty until Phase 0)
+LICENSE                MIT (code)
+LICENSE-docs           CC BY 4.0 (docs)
 THIRD_PARTY.md         third-party licenses and attribution
 ```
 

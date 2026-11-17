@@ -150,3 +150,6 @@ Full details: `docs/notes/mlx-benchmark.md`.
 2. Start Phase 0: KiCad reader + DRC harness → G0.
 3. Toy 16×16 EBM spike → G0.5.
 4. Labeling app + 50-board calibration → G1.
+
+**Published:** https://github.com/d4vid-le/legroundstate (public; GitHub detects MIT). CI added.
+The repo is planning-only; no model code yet.

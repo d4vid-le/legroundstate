@@ -7,6 +7,7 @@
 **Status:** Draft for discussion — planning only, no model trained yet
 
 **Project name:** LeGroundstate (repo/package/CLI: `legroundstate`)
+**Repository:** https://github.com/d4vid-le/legroundstate (public)
 **License:** MIT for code; CC BY 4.0 for docs; third-party components retain their licenses
 **Reference board:** Adafruit QT Py ESP32-S2 reconstruction (confirmed; 4-layer, 34 nets, 159 pads)
 **Training machine:** Apple M5 Pro Mac mini, 64 GB unified memory, MLX 0.32.4
