@@ -1,7 +1,8 @@
-# Research Notes
+# Groundstate — Research Notes
 
 **Date:** 2026-11-17
-**Purpose:** Ground the PCB-Enso plan in prior work, the Enso recipe, and the QT Py evidence.
+**Working name:** Groundstate (final name pending — see `docs/NAMING.md`)
+**Purpose:** Ground the project in prior work, the EBM/JEPA recipe, human preference learning, and the QT Py evidence.
 
 ---
 
@@ -43,6 +44,24 @@ Enso's domain is a 9×9 discrete grid with exact labels and a small, fixed rule 
 - **Verifiable:** KiCad DRC gives an exact, external pass/fail.
 
 The research question is whether the latent EBM recipe survives that transition. The negative space is much larger, the labels are noisier, and the output must be geometrically legal. That is the interesting part.
+
+### 1.4 What we can and cannot use from Enso
+
+Enso has **no license**, so this is a clean-room implementation. The legal distinction is simple:
+
+| Category | Can we use it? | Notes |
+|---|---|---|
+| Ideas, algorithms, architecture | **Yes** | Not copyrightable; cite the source |
+| Published hyperparameters / results | **Yes** | Facts; cite |
+| Training lessons (VICReg, latent norm, energy alignment) | **Yes** | Summarize in our own words; cite |
+| Source code, comments, docstrings, identifiers | **No** | Do not copy |
+| README prose, figures, tables | **No** | Do not copy; write our own |
+| Model weights | **No** | None needed; train from scratch |
+| Project name “Enso” | **No** | Use our own name |
+
+We implement from the public method descriptions and the JEPA papers (I-JEPA, IRED,
+JEPA-Reasoner), not by translating Enso's PyTorch files. See `docs/PROVENANCE.md` for the
+process and release checklist.
 
 ---
 
@@ -98,6 +117,28 @@ D3-A: 99 small open-source PCBench boards. Metrics: clean pass (CP), potential g
 - PCBWorld uses a 1,182-board KiCad 9 conversion; public release counts vary by version.
 - Licenses are per-board; a manifest is required before training or redistribution.
 
+### 3.3 Human-in-the-loop routing and preference learning
+
+DRC is necessary but not sufficient. A clean route can still be bad engineering. The relevant
+literature is human preference learning:
+
+| Work | Idea | Relevance |
+|---|---|---|
+| **Christiano et al., 2017** | Deep RL from human preferences: learn a reward from pairwise comparisons | The template for A/B route preferences |
+| **Bradley–Terry model** | `P(A ≻ B) = σ(score(A) − score(B))` | A principled loss for ranking routes by energy |
+| **RLHF / preference optimization** | Use human comparisons to shape a model's objective | We use it to shape the energy, not an LLM policy |
+| **Active learning** | Query the human on the most informative examples | Label the uncertain/disagreement cases, not random boards |
+
+For an EBM, this is a natural fit: the energy is already a scalar quality function. Human
+comparisons tell it which of two DRC-clean routes should have lower energy. The loss is simple:
+
+```
+L_pref = max(0, margin + E(rejected) − E(preferred))
+```
+
+The research question is whether preference-calibrated energy generalizes better than
+DRC-only energy. This is RQ7 in the plan. See `docs/LABELING.md` for the human workflow.
+
 ---
 
 ## 4. Prior art: JEPA and energy-based reasoning
@@ -147,13 +188,29 @@ The prior project is a careful reconstruction, not an independent route. The dis
 | Source | Size | Labels | License | Use |
 |---|---:|---|---|---|
 | Synthetic generator (ours) | unlimited | exact, DRC-filtered | ours | Pretraining, ablations |
+| Human gold set (David) | 300–1,000 | quality, difficulty, issues, preferences | ours (consent) | Fine-tune, preference ranking, eval |
 | QT Py | 1 | reference route | CC BY-SA 3.0 (Adafruit) | Held-out test |
 | PCBench | ~1,182 (varies) | routed boards | per-board | Eval / fine-tune |
 | PCBWorld D3 | 679 real | routed boards, DRC-scored | code BSD-3; boards per-project | External benchmark |
 | KiCad demos | tens | routed boards | per-project | Sanity checks |
 | Open hardware (Adafruit/SparkFun/etc.) | hundreds–thousands | routed boards | mostly CC BY-SA / MIT / CERN-OHL | Eval, with manifest |
 
-**The bottleneck is not architecture; it is trustworthy labels.** Every label must be DRC-verified and license-tracked. A 10k-board synthetic set with exact labels is worth more than 100k scraped boards with unknown legality.
+**The bottleneck is not architecture; it is trustworthy labels.** Every machine label must be
+DRC-verified and license-tracked; every human label must be consistent and versioned. A
+10k-board synthetic set with exact labels plus a 500-board human gold set is worth more than
+100k scraped boards with unknown legality and no quality signal.
+
+### 6.1 Two-Mac MLX distributed compute
+
+MLX supports distributed data parallelism over a Thunderbolt ring:
+
+- `mx.distributed.init()`, `all_sum`, and `tree_map` average gradients across hosts.
+- `mlx.distributed_config --backend ring` discovers the TB ring and writes a hostfile.
+- `mlx.launch --hosts ...` runs the same script on each host.
+
+For our workload, **task parallelism is more valuable than data parallelism**: the M4 Pro
+generates boards and runs DRC while the M5 Pro trains. Distributed training is an optional
+1.5–1.8× stretch, not a requirement. See `docs/notes/two-mac.md`.
 
 ---
 
@@ -167,6 +224,7 @@ The prior project is a careful reconstruction, not an independent route. The dis
 6. **Hold out the QT Py.** Otherwise G4 is meaningless.
 7. **Measure clean pass, not "looks routed."** Fully connected + zero DRC.
 8. **Benchmark against Freerouting.** It is fast and strong; a model that loses to it is a result, not a failure.
+9. **Use human labels for quality, not legality.** DRC is the legality oracle; the human is the taste oracle. Preference pairs calibrate the energy.
 
 ---
 
@@ -191,12 +249,20 @@ The prior project is a careful reconstruction, not an independent route. The dis
 - Quilter, *The PCB Autorouter Was the Right Idea. Completion Rate Was the Wrong Target.* https://www.quilter.ai/blog/pcb-autorouter-was-the-right-idea
 - DeepPCB benchmark claim (vendor). https://deeppcb.ai/benchmark/pcbworld-bench-deeppcb-results/
 
+### Human preference / active learning
+
+- Christiano et al., *Deep Reinforcement Learning from Human Preferences*, NeurIPS 2017. https://arxiv.org/abs/1706.03741
+- Bradley & Terry, *Rank Analysis of Incomplete Block Designs: I. The Method of Paired Comparisons*, Biometrika 1952. https://doi.org/10.1093/biomet/39.3-4.324
+- Settles, *Active Learning Literature Survey*, 2009. https://burrsettles.com/pub/settles.activelearning.pdf
+
 ### KiCad / tooling
 
 - KiCad IPC API. https://dev-docs.kicad.org/en/apis-and-binding/ipc-api/
 - kicad-python (`kipy`). https://pypi.org/project/kicad-python/
 - MLX. https://github.com/ml-explore/mlx
 - MLX docs. https://ml-explore.github.io/mlx/
+- MLX distributed (ring / Thunderbolt). https://ml-explore.github.io/mlx/build/html/usage/distributed.html
+- MLX launching distributed jobs. https://ml-explore.github.io/mlx/build/html/usage/launching_distributed.html
 
 ### The reference board
 

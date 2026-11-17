@@ -1,7 +1,8 @@
 # MLX benchmark — 2026-11-17
 
 **Machine:** Apple M5 Pro Mac mini (Mac17,16), 18-core CPU (6 super + 12 performance), 64 GB unified memory, `applegpu_g17s`, 424 GB free disk.
-**Software:** macOS 26.x, Python 3.13.15 (uv-managed), MLX 0.32.4, `mlx-metal` 0.32.4.
+**Worker (not yet benchmarked):** Apple M4 Pro Mac mini, 64 GB, Thunderbolt 5.
+**Software:** macOS 27.2.1, Python 3.13.15 (uv-managed), MLX 0.32.4, `mlx-metal` 0.32.4.
 **Script:** `scripts/bench_mlx.py` (reproducible; synthetic tensors).
 
 These are **preliminary synthetic benchmarks**, not end-to-end PCB model numbers. They exclude data loading, the full encoder/decoder, fine-grid decoding, and DRC.

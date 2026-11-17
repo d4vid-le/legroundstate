@@ -10,7 +10,7 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 
 **Context:** The machine is an Apple M5 Pro Mac mini with 64 GB unified memory. The user wants to train locally with MLX. Enso is PyTorch/CUDA-oriented; cloud GPUs are not in the base plan.
 
-**Decision:** Implement PCB-Enso in MLX 0.32.4 + Python 3.13. Use PyTorch only as an optional reference for parity checks, never as the training path. Design model sizes and grid resolutions around the measured local throughput.
+**Decision:** Implement Groundstate in MLX 0.32.4 + Python 3.13. Use PyTorch only as an optional reference for parity checks, never as the training path. Design model sizes and grid resolutions around the measured local throughput.
 
 **Consequences:**
 
@@ -170,3 +170,96 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 - No tuning on the final test.
 - Synthetic-to-real generalization is measured, not assumed.
 - The benchmark harness must be built before the model (G0/G1).
+
+---
+
+## ADR-0010 — Build our own EBM; Enso is research inspiration only
+
+**Status:** Accepted (2026-11-17)
+
+**Context:** Enso has no license, and the user wants to build our own model rather than fork it. The method (JEPA-style latent EBM with Langevin inference) is published; the code and prose are not licensed for reuse.
+
+**Decision:** Implement a clean-room MLX model from public research (I-JEPA, IRED, JEPA-Reasoner, Kona/Enso descriptions). Do not copy Enso code, comments, prose, figures, or weights. Keep the upstream source local and gitignored. Do not use the Enso name for the project.
+
+**Consequences:**
+
+- More implementation work, but clean provenance.
+- The architecture will diverge to fit spatial PCB data.
+- A release gate checks for copied material; see `docs/PROVENANCE.md`.
+- If we ever want to reuse specific code, ask the upstream author for written permission.
+
+---
+
+## ADR-0011 — Human-in-the-loop labels and preference learning
+
+**Status:** Accepted (2026-11-17)
+
+**Context:** DRC-clean is necessary but not sufficient. A route can pass DRC and still be poor engineering. The user is willing to review and label boards, and their judgment is the scarce, high-value signal.
+
+**Decision:** Treat human labels as a first-class data source:
+
+- Machine labels (classical routes + DRC) provide the bulk pretraining data.
+- Human labels provide a gold set: accept/reject, quality, difficulty, issue tags, and blind A/B preferences.
+- Train a quality head and a preference-ranking energy term.
+- Use active learning to spend the reviewer's time on uncertain/disagreement cases.
+- Label schema and tool: `docs/LABELING.md`.
+
+**Consequences:**
+
+- The data pipeline includes a review UI and label versioning.
+- Human labels are small; they fine-tune/evaluate, not pretrain.
+- The energy can be calibrated beyond DRC, which is the central research bet.
+- Reviewer time becomes a tracked project resource.
+
+---
+
+## ADR-0012 — Two-Mac local cluster; task-parallel first
+
+**Status:** Accepted (2026-11-17)
+
+**Context:** An M4 Pro Mac mini with 64 GB is available over Thunderbolt 5. MLX supports distributed data parallelism over a TB ring, but the data pipeline is the bottleneck.
+
+**Decision:**
+
+1. **Default:** task-parallel. M4 Pro generates boards, runs classical routing/DRC, and hosts the labeling app; M5 Pro trains.
+2. **Optional:** data-parallel training via `mlx.distributed_config --backend ring` + `mlx.launch`, if Phase 3 is compute-bound.
+3. Single M5 Pro is sufficient for G0–G4. The M4 is an accelerator, not a requirement.
+
+**Consequences:**
+
+- No distributed-training complexity in the critical path.
+- Shared storage or `rsync` is required for datasets and labels.
+- Benchmark the M4 before assigning it training work.
+- See `docs/notes/two-mac.md`.
+
+---
+
+## ADR-0013 — Working title Groundstate; rename pending
+
+**Status:** Proposed (2026-11-17)
+
+**Context:** The user wants a name other than Enso. The project currently lives in a folder and package named `pcb-enso`, which is a working title and implies a relationship we do not have.
+
+**Decision:** Use **Groundstate** as the working title in docs. Keep the directory and package names until the user confirms. Perform the rename once, in a single commit, using the checklist in `docs/NAMING.md`.
+
+**Consequences:**
+
+- No half-renamed code.
+- Docs say “Groundstate (working title)” and `pcb-enso` is marked as the legacy/working path.
+- The final repo/package/CLI name is a human decision.
+
+---
+
+## ADR-0014 — Labels are append-only and versioned
+
+**Status:** Accepted (2026-11-17)
+
+**Context:** Human labels are expensive and subjective. Silent edits would make experiments irreproducible and hide reviewer drift.
+
+**Decision:** Store labels in SQLite with an append-only `label_version`; corrections are new rows. Export immutable JSONL shards with a manifest hash. Never train on the frozen test split. Record reviewer ID, time spent, and confidence.
+
+**Consequences:**
+
+- Reproducible datasets and audits.
+- Slightly more storage; trivial compared to the review time.
+- The UI must support undo as a new label, not a destructive edit.

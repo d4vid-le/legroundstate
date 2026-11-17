@@ -19,8 +19,12 @@ replication" in the README is a description, not a license grant.
 1. Do not commit `third_party/enso/` or the archive.
 2. Do not copy Enso source into `src/` or any committed file.
 3. Use it only as a local reference for architecture, hyperparameters, and training lessons.
-4. Implement PCB-Enso independently in MLX and cite Enso/Kona.
+4. Implement our own EBM independently in MLX and cite Enso/Kona.
 5. If we want to reuse code, ask the upstream author for explicit permission first.
+
+**Project position (2026-11-17):** We are building our own JEPA-style EBM (working title
+**Groundstate**) rather than forking Enso. Enso is research inspiration only. See
+`docs/PROVENANCE.md` for the clean-room policy and release gate.
 
 ### Why keep it at all?
 

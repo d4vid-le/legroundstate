@@ -1,11 +1,12 @@
 # Original brief — v0.1
 
 **Source:** Summary of a prior agent conversation, provided by David Le on 2026-11-17.
-**Status:** Input document, kept verbatim for traceability. Superseded by `docs/SPEC.md` v0.2.
+**Status:** Input document, kept verbatim for traceability. Superseded by `docs/SPEC.md` v0.3.
 
-> The v0.2 spec changes the representation, grid resolution, architecture, energy,
-> inference, and integration assumptions. See `docs/SPEC.md` §11 for the diff and
-> `docs/DECISIONS.md` ADR-0003…ADR-0005 for the rationale.
+> The v0.3 spec changes the representation, grid resolution, architecture, energy,
+> inference, and integration assumptions. It also replaces the “Enso reimplementation”
+> framing with an independent, clean-room EBM. See `docs/SPEC.md` §11 and
+> `docs/DECISIONS.md` ADR-0003…ADR-0005, ADR-0010.
 
 ---
 

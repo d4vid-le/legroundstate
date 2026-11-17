@@ -1,14 +1,16 @@
-# PCB-Enso — Project Plan
+# Groundstate — Project Plan
 
-**Version:** 0.2 (MLX-first revision)
+**Version:** 0.3 (own EBM, human labels, two-node local compute)
 **Date:** 2026-11-17
 **Owner:** David Le
 **Lead agent:** DeepSeek V4.1 Flash
 **Status:** Draft for discussion — planning only, no model trained yet
 
+**Working name:** Groundstate (final name pending — see `docs/NAMING.md`)
 **Reference board:** Adafruit QT Py ESP32-S2 reconstruction (4-layer, 34 nets, 159 pads)
 **Training machine:** Apple M5 Pro Mac mini, 64 GB unified memory, MLX 0.32.4
-**Upstream inspiration:** [Enso](https://github.com/MVPandey/Enso) — a Sudoku EBM/JEPA. Pinned, not vendored (no license).
+**Worker machine (optional):** Apple M4 Pro Mac mini, 64 GB, Thunderbolt 5
+**Research inspiration:** Enso/Kona (ideas only; no code copied — see `docs/PROVENANCE.md`)
 
 > This is independent research. It is not affiliated with or endorsed by Logical Intelligence,
 > the Enso authors, Adafruit, or the KiCad project. Nothing here is fabrication-ready.
@@ -19,9 +21,11 @@
 
 **The bottleneck.** In the QT Py reconstruction, placement and connectivity were tractable; routing was not. The independent 2-layer route peaked at **9 unconnected nets**, the targeted 4-layer attempt at **8**, and the final board passed only by falling back to the reference geometry. The failure was not local pathfinding — it was global allocation: signal tracks fragmented the GND pours, and the power geometry was coupled to a different signal route.
 
-**The hypothesis.** Enso's recipe — a global context encoder, a low-dimensional latent variable, an energy landscape, and Langevin optimization at inference — is a good fit for problems where a solution must satisfy many constraints simultaneously. PCB routing is exactly that. We want to test whether a latent EBM can propose a **globally consistent routing plan** that a deterministic detailed router and KiCad's DRC can turn into legal copper.
+**The hypothesis.** A JEPA-style latent EBM — a global context encoder, a low-dimensional latent variable, an energy landscape, and Langevin optimization at inference — is a good fit for problems where a solution must satisfy many constraints simultaneously. PCB routing is exactly that. We want to test whether a latent EBM can propose a **globally consistent routing plan** that a deterministic detailed router and KiCad's DRC can turn into legal copper.
 
-**The honest caveat.** The Enso weights are Sudoku-specific and cannot be fine-tuned into a router. We are adapting the **architecture and training recipe**, not the trained model. The hard problems are representation, data, and legality — not the EBM code.
+**Build our own.** We are **not** forking Enso. The upstream repository has no license, so we use the published research as inspiration and implement our own EBM in MLX. See `docs/PROVENANCE.md` for the clean-room rules.
+
+**The honest caveat.** Sudoku weights cannot be fine-tuned into a router. The hard problems are representation, data, and legality — not the EBM code.
 
 **The proposed system.** A three-level router:
 
@@ -31,11 +35,13 @@
 
 The EBM is the **global planner**, not the geometry generator. KiCad's DRC is the ground truth. This hybrid is deliberately less glamorous than end-to-end pixel routing, and much more likely to produce a board that passes.
 
+**Human in the loop.** Synthetic and classical-router labels provide the bulk training data. **David labels the gold set**: accept/reject, quality, difficulty, issue tags, and blind A/B preferences. Human preferences calibrate the energy beyond DRC-clean. See `docs/LABELING.md`.
+
 **First real milestone (Gate G4).** On a from-scratch, unrouted QT Py ESP32-S2 board, route the **signal nets** to **0 signal-net unconnected / 0 DRC errors**. Power/ground planes are handled classically, measured separately, and the scope difference from the prior 8–9 unconnected full-board peak is stated explicitly.
 
-**First two weeks.** Build the KiCad I/O + DRC harness, the board tensorizer, the classical baselines, and the MLX training skeleton. Do not train a routing model until Gate G0 (I/O fidelity) passes.
+**First weeks.** Build the KiCad I/O + DRC harness, the board tensorizer, the classical baselines, the labeling tool, and the MLX training skeleton. The toy EBM recipe spike (G0.5) comes before the data engine. Do not train a routing model on real boards until Gate G0 passes.
 
-**Why this can fail — and what we still learn.** The model may not beat Freerouting. If it does not, we will still have: a reproducible KiCad routing benchmark, a rigorous ablation of latent EBM vs. feed-forward vs. classical routing, and a clear answer to whether test-time energy minimization helps constrained geometric design. That is a publishable result either way.
+**Why this can fail — and what we still learn.** The model may not beat Freerouting. If it does not, we will still have: a reproducible KiCad routing benchmark, a rigorous ablation of latent EBM vs. feed-forward vs. classical routing, a human-labeled quality dataset, and a clear answer to whether test-time energy minimization helps constrained geometric design. That is a publishable result either way.
 
 ---
 
@@ -83,7 +89,7 @@ That is precisely the failure mode an EBM is supposed to address: evaluate the w
 
 ### 1.3 Scope
 
-**In scope (v0.2):**
+**In scope (v0.3):**
 
 - Rigid boards, 2 and 4 copper layers.
 - Signal nets first; power/ground planes handled by zones + stitching heuristics.
@@ -105,15 +111,20 @@ That is precisely the failure mode an EBM is supposed to address: evaluate the w
 
 | Asset | Location | Notes |
 |---|---|---|
-| Enso source (Sudoku EBM) | `third_party/enso/` (gitignored) | Upstream commit `8013c8f`, MLX reimplementation planned |
+| Enso source (research reference) | `third_party/enso/` (gitignored) | Upstream commit `8013c8f`; **no license**, reference only |
 | Enso archive | `third_party/Enso-main.zip` (gitignored) | SHA-256 `0781c0f4…519cb35` |
 | QT Py ESP32-S2 project | `boards/qt-py-esp32-s2/` | Full reconstruction, reports, KiCad board, exports |
 | Board snapshot commit | `73ff5db` | Preserved locally as `.git-disabled`; upstream repo linked in `boards/README.md` |
 | KiCad | `/Applications/KiCad/KiCad.app` | 10.0.7, `kicad-cli` available |
 | MLX | `.venv` | 0.32.4, Metal GPU, 64 GB unified memory |
+| Worker Mac | M4 Pro mini, 64 GB | Thunderbolt 5 link; data/labeling/DRC first |
 | Prior plan input | `docs/briefs/original-spec.md` | The first-draft technical spec, kept for traceability |
+| Naming | `docs/NAMING.md` | Candidates and rename checklist; working title Groundstate |
+| Provenance | `docs/PROVENANCE.md` | Clean-room rules; no Enso code copied |
+| Labeling | `docs/LABELING.md` | Human review schema, tool, QC, preference learning |
+| Two-Mac setup | `docs/notes/two-mac.md` | TB5, MLX ring, task-parallel vs. data-parallel |
 
-### 2.1 What Enso actually is
+### 2.1 What Enso actually is (and what we take from it)
 
 Enso is an independent replication of Logical Intelligence's Kona 1.0 Sudoku EBM. It trains a JEPA-style model:
 
@@ -126,6 +137,11 @@ Enso is an independent replication of Logical Intelligence's Kona 1.0 Sudoku EBM
 - **Result:** 36.5M parameters, 96.6% puzzle accuracy, +1.0% from Langevin.
 - **Compute:** 22 hours on an H200 for 9M puzzles × 20 epochs.
 
+**We take the method, not the code.** The upstream repository has no license; see
+`docs/PROVENANCE.md`. We implement our own MLX model from the published research and the
+JEPA papers. The architecture will diverge (CNN + patch transformer, flow decoder) because
+the domain is spatial and geometric, not a 9×9 digit grid.
+
 The important lessons from the Enso training log are not the Sudoku numbers. They are:
 
 1. **Representation collapse is the default failure.** VICReg must be applied to the right tensor (`z_context`), not the predictor output.
@@ -137,14 +153,15 @@ The important lessons from the Enso training log are not the Sudoku numbers. The
 ### 2.2 What we are not claiming
 
 - Enso's Sudoku weights do not transfer. The input is 10 channels of 9×9 digits; ours is a multi-layer spatial board. We will train from scratch.
-- "Open-source" is not the same as "licensed." The upstream repository has **no LICENSE file** and GitHub reports no license. Default copyright applies. We will not copy its code into this repo. See §12.
+- "Open-source" is not the same as "licensed." The upstream repository has **no LICENSE file** and GitHub reports no license. Default copyright applies. We will not copy its code into this repo. See `docs/PROVENANCE.md`.
+- We are not "Enso for PCBs," and we are not affiliated with the Enso or Kona authors. The project will get its own name; see `docs/NAMING.md`.
 - A 36.5M-parameter model on an H200 is not the target. We are designing for a 64 GB M5 Pro and a much smaller, spatially structured model.
 
 ---
 
-## 3. What transfers from Enso — and what does not
+## 3. What we borrow from the research — and what we do not
 
-| Enso component / idea | Transfers? | PCB-Enso adaptation |
+| Enso component / idea | Transfers? | Groundstate adaptation |
 |---|---|---|
 | Context encoder | **Yes, as a pattern** | CNN + patch transformer over the board; global `z_context` |
 | Target encoder + EMA | **Yes** | EMA copy over routed-board labels |
@@ -161,7 +178,7 @@ The important lessons from the Enso training log are not the Sudoku numbers. The
 | ~300 ms inference | **No** | Target seconds to minutes initially |
 | 36.5M params / H200 | **No** | 5–15M params; M5 Pro; coarse-to-fine |
 
-**The core transfer is the recipe:** learn a latent representation of a *solved* board, predict it from an *unsolved* board, and at test time optimize a latent variable against an energy that encodes the constraints. The domain-specific parts are ours.
+**The core transfer is the recipe:** learn a latent representation of a *solved* board, predict it from an *unsolved* board, and at test time optimize a latent variable against an energy that encodes the constraints. The domain-specific parts are ours. We do not copy Enso's code, prose, or figures; see `docs/PROVENANCE.md`.
 
 ---
 
@@ -187,7 +204,13 @@ Quality vs. Langevin steps, chains, and latent dimension. If +10× compute buys 
 **RQ6 — Can the energy landscape be inspected?**
 Does the energy correlate with DRC violations, congestion, and rip-up count? An interpretable energy is a useful engineering signal even if the routes are not better.
 
-**Success is not only "0 unconnected."** A rigorous negative result on RQ1/RQ2, with a working benchmark, is a valid outcome. The project fails only if we cannot produce reproducible evidence either way.
+**RQ7 — Can human preference labels calibrate the energy?**
+Train with DRC-only labels vs. DRC + human A/B preferences. Metric: preference accuracy and energy–quality correlation on held-out boards. This is the most direct test of whether an EBM can learn “taste,” not just legality.
+
+**RQ8 — Does the human-labeled quality signal transfer?**
+Do preference-tuned energies rank routes on unseen board families better than a DRC-only energy? If yes, the human labels are teaching a general quality prior, not memorizing boards.
+
+**Success is not only "0 unconnected."** A rigorous negative result on RQ1/RQ2/RQ7, with a working benchmark, is a valid outcome. The project fails only if we cannot produce reproducible evidence either way.
 
 ---
 
@@ -333,12 +356,14 @@ The EBM never gets the final say on legality. KiCad does.
 **Agent tool surface:**
 
 ```
-pcb-enso inspect   board.kicad_pcb                 → board summary + tensor preview
-pcb-enso route     board.kicad_pcb --scope signal  → routed board + DRC report
-pcb-enso suggest   board.kicad_pcb --net SDA       → corridor/ordering proposal
-pcb-enso score     board.kicad_pcb                 → metrics + violations
-pcb-enso repair    board.kicad_pcb --drc drc.json  → repaired board
+groundstate inspect   board.kicad_pcb                 → board summary + tensor preview
+groundstate route     board.kicad_pcb --scope signal  → routed board + DRC report
+groundstate suggest   board.kicad_pcb --net SDA       → corridor/ordering proposal
+groundstate score     board.kicad_pcb                 → metrics + violations
+groundstate repair    board.kicad_pcb --drc drc.json  → repaired board
 ```
+
+(Command name is the working title; the final name is pending — see `docs/NAMING.md`.)
 
 Two modes:
 
@@ -353,11 +378,19 @@ The agent (me) uses the tool, checks the DRC, and makes the electrical judgement
 
 This is the critical path. Enso had 9M Sudoku puzzles with exact labels. PCB routing does not. Without a data engine, the model will not learn.
 
+**Two kinds of labels:**
+
+1. **Bulk machine labels** — synthetic boards routed by classical algorithms, DRC-filtered. Cheap, plentiful, teach imitation.
+2. **Human gold labels** — David reviews a curated subset for quality, difficulty, issue tags, and blind A/B preferences. Expensive, small, teach *taste*.
+
+Both are required. The bulk labels teach the model to route; the human labels teach it what “good” means. See `docs/LABELING.md`.
+
 ### 6.1 Sources
 
 | Source | Volume | Use | License / caveat |
 |---|---|---|---|
 | Procedural synthetic boards | 10k–100k | Pretraining, ablations, curriculum | Generated by us; own the labels |
+| Human-labeled gold set | 300–1,000 | Fine-tune, preference ranking, evaluation | David's labels; consent + anonymization |
 | QT Py ESP32-S2 | 1 board | Held-out final test only | Adafruit reference CC BY-SA 3.0; reconstruction repo |
 | PCBench | ~1,182 boards (public releases vary) | Real-board evaluation / fine-tune | Per-board open-source licenses; maintain manifest |
 | PCBWorld D3 | 679 real boards, KiCad 9 | External benchmark | Code BSD-3; boards retain original licenses |
@@ -384,20 +417,51 @@ Two labeling strategies:
 
 Use both. Keep multiple solutions per board where possible (different seeds) to teach diversity rather than a single "correct" route.
 
-### 6.3 Label quality
+### 6.3 Machine label quality
 
 - Every label is re-opened and checked with `kicad-cli pcb drc`.
 - Reject labels with error-level violations.
 - Store the label's cost (length, vias) and the router/seed that produced it.
 - Prefer multiple diverse DRC-clean labels over one "optimal" label.
 
-### 6.4 Splits
+### 6.4 Human labels
+
+The human does not re-do the machine's DRC. The human answers questions the DRC cannot:
+
+- Would you put this route on a board you care about?
+- Quality 1–5, difficulty 1–5, issue tags.
+- Given two DRC-clean routes, which is better?
+
+The pipeline:
+
+1. Generate candidates; auto-filter DRC/unconnected/degenerate.
+2. Agent pre-scores and ranks by uncertainty/disagreement/family.
+3. David reviews in a local web app (keyboard-first, blind A/B, resume).
+4. Labels stored in SQLite, exported as immutable JSONL with a manifest hash.
+5. Active learning selects the next batch.
+
+**QC:** 5% hidden duplicates, a 50-board calibration set, time-per-board tracking, and a written
+rubric. Target 30–60 seconds per board. See `docs/LABELING.md`.
+
+### 6.5 Human labels in training
+
+- **Supervised flow labels** from classical routes (bulk).
+- **Quality regression** on the 1–5 score / accept probability.
+- **Preference ranking** on blind A/B pairs:
+  `L_pref = max(0, margin + E(rejected) − E(preferred))`.
+- **Active learning** from energy uncertainty and model/classical disagreement.
+
+The preference loss is the most interesting research lever: it calibrates the energy with human
+judgment, not just DRC. It also gives us an evaluation metric for the energy itself.
+
+### 6.6 Splits
 
 - **By design family**, not by random board. Boards from the same author/project must not appear in both train and test.
 - Held-out: QT Py (final), a PCBench family subset, and a synthetic "hard" split with denser nets.
+- Human-labeled boards can appear in train/val; never in the frozen test.
 - Report zero-shot and fine-tuned numbers separately.
 
-### 6.5 Volume estimates
+### 6.7 Volume estimates
 
 | Level | Per-board tensor | 10k boards | 50k boards |
 |---|---|---|---|
@@ -426,8 +490,15 @@ Secondary metrics:
 | Skew | differential-pair length mismatch, mm | ↓ |
 | Runtime | wall-clock seconds | ↓ |
 | Generalization gap | synthetic vs. real clean-pass rate | ↓ |
+| Human accept rate | fraction of routes David would use | ↑ |
+| Human quality | mean 1–5 quality score on the gold set | ↑ |
+| Preference accuracy | fraction of blind A/B pairs where the energy ranks the human-preferred route lower | ↑ |
+| Energy–quality correlation | Spearman correlation between energy and human quality | ↑ |
 
 Use PCBWorld's `@5` protocol for external comparisons where applicable: five rollouts, keep the best by potential, average over boards. Report `@1` too, because deterministic methods and our model may differ.
+
+**Human metrics are not optional.** A route can be DRC-clean and still bad engineering. The
+gold set and preference pairs are how we measure that.
 
 ### 7.2 Benchmark sets
 
@@ -467,13 +538,15 @@ Use PCBWorld's `@5` protocol for external comparisons where applicable: five rol
 
 **Deliverables:**
 
-- Repo structure, docs, license decision, environment check.
+- Repo structure, docs, **name decision**, license decision, environment check.
+- Two-Mac setup checklist (SSH, TB5, shared data); optional, not a blocker.
 - KiCad reader → canonical board model (outline, stackup, pads, nets, rules, obstacles).
 - Tensorizer at L0/L1/L2 with visual overlays.
 - `kicad-cli pcb drc` runner + metrics JSON.
 - Round-trip no-op writer.
 - Freerouting baseline + A* baseline harness.
 - MLX training skeleton (module tree, optimizer, checkpoint, smoke test).
+- Labeling tool skeleton (SQLite schema + review queue stub).
 
 **Gate G0 — I/O fidelity (hard):**
 - Parse the QT Py board: 34 nets, 159 pads, 425 segments, 43 vias.
@@ -486,7 +559,7 @@ Use PCBWorld's `@5` protocol for external comparisons where applicable: five rol
 **Deliverables:**
 
 - Tiny synthetic boards: 4–8 nets, 16×16 grid, 2 layers, no obstacles.
-- A 1–2M-parameter MLX PCB-JEPA (CNN encoder/decoder, small latent).
+- A 1–2M-parameter MLX latent-flow EBM (CNN encoder/decoder, small latent).
 - Train for a few hours; run forward-only and Langevin inference.
 - A short note: does the recipe fit the toy task at all?
 
@@ -497,19 +570,24 @@ Use PCBWorld's `@5` protocol for external comparisons where applicable: five rol
 
 This is a deliberate cheap failure point. It is much cheaper to discover a broken energy/latent design on 16×16 boards than on 10k DRC-checked boards.
 
-### Phase 1 — Data engine v0 (weeks 3–5)
+### Phase 1 — Data engine and labeling v0 (weeks 3–5)
 
 **Deliverables:**
 
 - Synthetic board generator v0 (2 layers, 4–16 nets, controllable density).
 - Classical labeler (A*/rip-up + Freerouting), DRC filtering, multi-seed diversity.
 - Dataset schema, sharding, splits, manifest, license metadata.
-- 10k L0 boards + 1k L1 boards with verified labels.
-- Enso recipe smoke test on a tiny Sudoku subset (optional; validates the MLX training loop, not the PCB model).
+- 10k L0 boards + 1k L1 boards with verified machine labels.
+- **Curate 50–100 real boards** with permissive licenses (PCBench/PCBWorld/open hardware) into the review queue.
+- **Labeling web app v0** (FastAPI + SQLite + static frontend).
+- **50-board human calibration set** labeled by David; rubric frozen.
+- Active-learning queue: model uncertainty + classical disagreement + family diversity.
 
-**Gate G1 — Dataset v0:**
+**Gate G1 — Dataset and labeling v0:**
 - 10k boards generated reproducibly.
-- ≥90% of labels DRC-clean on easy boards; ≥60% on hard.
+- ≥90% of machine labels DRC-clean on easy boards; ≥60% on hard.
+- David labels the 50-board calibration set in <45 minutes.
+- Self-consistency on 5% hidden duplicates ≥85%.
 - Baseline success rates measured and documented.
 - No train/test family leakage.
 
@@ -532,24 +610,27 @@ Train a small supervised model for each. Evaluate after path extraction + legali
 
 **Deliverables:**
 
-- PCB-JEPA in MLX: context encoder, EMA target, predictor, decoder.
+- Latent-flow EBM in MLX: context encoder, EMA target, predictor, decoder.
 - Energy terms: latent, flow conservation, capacity, clearance, via, length/skew, keep-out.
 - Langevin inference with path extraction.
-- Ablations: no Langevin, no VICReg, no constraint loss, no global context.
+- **Preference/quality head** trained on the human gold set.
+- Ablations: no Langevin, no VICReg, no constraint loss, no global context, no preference loss.
 - Training on B2; zero-shot B3.
 
 **Gate G3 — Does Langevin help?**
 - On held-out B2, Langevin improves clean-pass rate by ≥3 percentage points over a single forward pass, at a stated compute budget.
+- The human-preference loss improves preference accuracy over the DRC-only energy on the gold set.
 - If it does not, document the negative result and pivot to the feed-forward/classical hybrid. This is a legitimate outcome.
 
 ### Phase 4 — Hybrid router and KiCad integration (weeks 11–13)
 
 **Deliverables:**
 
-- `pcb-enso` CLI: inspect, route, suggest, score, repair.
+- `groundstate` CLI (working title): inspect, route, suggest, score, repair.
 - Detailed router + legalizer + DRC repair loop.
 - Batch mode and copilot mode.
 - QT Py signal-net run from scratch.
+- Human review of the final routes on the gold set.
 - MCP/agent interface (optional but desirable).
 
 **Gate G4 — QT Py signal route (headline):**
@@ -573,30 +654,30 @@ Train a small supervised model for each. Evaluate after path extraction + legali
 |---|---|---|---|
 | G0 | Can we read/write/verify boards faithfully? | Round-trip + DRC parity | Fix I/O before any ML |
 | G0.5 | Does the recipe fit a toy task? | >80% edge accuracy, >50% nets connected | Fix energy/latent before data |
-| G1 | Do we have enough trustworthy labels? | 10k boards, 90% easy clean | Improve generator/labeler |
+| G1 | Do we have enough trustworthy labels? | 10k machine boards + 50 human calibration, 90% easy clean | Improve generator/labeler/UI |
 | G2 | Which representation? | Clear winner on clean pass | Simplify; pick B if C ties |
-| G3 | Does Langevin add value? | +3 pts clean pass | Pivot to feed-forward hybrid |
+| G3 | Does Langevin/preference learning add value? | +3 pts clean pass and better preference accuracy | Pivot to feed-forward hybrid |
 | G4 | Does it route the QT Py? | 0 signal-net unconnected / 0 DRC | Narrow scope; report honestly |
 | G5 | Does it generalize? | Competitive with Freerouting on B3 | Publish negative result + harness |
 
 ### First ten working sessions
 
-1. Repo, docs, environment check, license audit.
+1. Repo, docs, name decision, environment check, license audit.
 2. KiCad S-expression reader → canonical board model.
 3. DRC runner + metrics JSON + golden test.
 4. Tensorizer L0/L1/L2 + overlay render.
 5. No-op round-trip → **G0**.
-6. Toy 16×16 MLX JEPA spike → **G0.5**.
+6. Toy 16×16 MLX EBM spike → **G0.5**.
 7. Freerouting baseline + A* baseline.
-8. Synthetic generator v0.
-9. Labeler + DRC filter + dataset sharding/manifest.
+8. Synthetic generator + labeler + dataset sharding/manifest.
+9. Labeling web app + 50-board calibration → **G1**.
 10. **G1** review + go/no-go.
 
 ---
 
-## 9. Compute plan on the M5 Pro
+## 9. Compute plan: two Macs, local only
 
-### 9.1 Measured baseline (MLX 0.32.4)
+### 9.1 Measured baseline (M5 Pro, MLX 0.32.4)
 
 Preliminary synthetic benchmark, not the full model:
 
@@ -610,7 +691,25 @@ These are forward+backward on synthetic tensors; the full model, data loading, f
 
 **Implication:** a 5–15M coarse-grid model is comfortably trainable locally. The bottleneck will be **label generation and DRC evaluation**, not the MLX training step.
 
-### 9.2 Memory plan
+### 9.2 Two-Mac roles
+
+| Machine | Primary role | Secondary role |
+|---|---|---|
+| **M5 Pro (64 GB)** | Model training, Langevin inference | Labeling UI host |
+| **M4 Pro (64 GB), TB5** | Synthetic generation, classical routing, DRC/eval | Labeling server, optional data-parallel training |
+
+**Default: task parallel.** The M4 runs the data engine while the M5 trains. This is the highest-value use of the second machine and requires only SSH + `rsync`/shared SSD.
+
+**Optional: data parallel.** MLX can average gradients across machines over a Thunderbolt ring:
+
+```bash
+mlx.distributed_config --verbose --hosts <m5>,<m4> --backend ring
+mlx.launch --hosts <m5-ip>,<m4-ip> scripts/train_l0.py
+```
+
+Expected gain ~1.5–1.8× (sync + slower node), not 2×. Benchmark before adopting. Do not use it for the first milestone. See `docs/notes/two-mac.md`.
+
+### 9.3 Memory plan
 
 - 64 GB unified memory; keep peak allocation under ~48 GB.
 - `mx.set_memory_limit` / `mx.set_wired_limit` to avoid swap pressure.
@@ -618,20 +717,22 @@ These are forward+backward on synthetic tensors; the full model, data loading, f
 - Use `mx.compile` with fixed shapes; bucket boards by grid size to avoid recompiles.
 - bf16 is not faster in the preliminary benchmark; default to fp32 for stability, test bf16 later.
 
-### 9.3 Wall-clock estimates
+### 9.4 Wall-clock estimates
 
 | Task | Estimate |
 |---|---|
 | L0 training, 10k boards × 20 epochs, 10M model | 2–10 hours (including data pipeline) |
 | Representation bake-off (3 reps × 3 seeds) | 1–3 days |
-| Langevin ablation (5 settings × 3 seeds) | 1–2 days |
-| Label generation, 10k boards, classical router | 1–3 days (parallel CPU) |
+| Langevin + preference ablation (5 settings × 3 seeds) | 1–2 days |
+| Machine label generation, 10k boards, classical router | 1–3 days (parallel CPU; M4 helps) |
+| Human calibration, 50 boards | <45 minutes |
+| Human gold set, 300–500 boards | 4–7 hours |
 | QT Py end-to-end route + DRC + repair | seconds to minutes per attempt |
 
-### 9.4 Cost
+### 9.5 Cost
 
-- Compute: $0 (local machine; electricity).
-- Storage: ~100 GB working set; 424 GB free.
+- Compute: $0 (two local machines; electricity).
+- Storage: ~100 GB working set; 424 GB free on the M5; M4 capacity TBD.
 - Optional cloud: only if we scale beyond local capacity. Not in the base plan.
 
 ---
@@ -653,6 +754,8 @@ These are forward+backward on synthetic tensors; the full model, data loading, f
 | 11 | Scope creep | High | High | Signal nets first; 2/4 layers; no HDI; gates | Any out-of-scope work |
 | 12 | Silent DRC waivers / cherry-picking | Low | High | Fresh `kicad-cli` DRC on saved board; JSON artifacts; journal | Any claim |
 | 13 | Board damage / bad fabrication | Low | High | Experimental only; human review; no fabrication | Release |
+| 14 | Human labeling bottleneck / inconsistency | High | Medium | 50-board calibration; rubric; hidden duplicates; active learning; target <60 s/board | Self-consistency <85% |
+| 15 | Two-Mac setup/sync complexity | Medium | Low | Task-parallel first; shared SSD/rsync; distributed training optional | >1 day lost |
 
 ---
 
@@ -701,17 +804,28 @@ The human approves:
 
 I am the lead implementation agent: I write the code, run experiments, maintain the benchmark, write the docs, and report honestly. I do not make electrical-safety or fabrication decisions, and I do not push to GitHub without approval.
 
+### 11.6 Provenance and labeling rules
+
+- **No Enso code, prose, or figures.** The upstream source is a local reference only; see `docs/PROVENANCE.md`.
+- **No "Enso" in the project/package/CLI names.** The final name is chosen separately; see `docs/NAMING.md`.
+- **Human labels are append-only and versioned.** Never edit an old label; add a new one with a new version.
+- **The reviewer's time is the scarcest resource.** Every labeling feature is judged by boards/minute and consistency.
+- **No training on the frozen test set or the QT Py.** Labels and splits are recorded in the manifest.
+
 ---
 
 ## 12. Open decisions
 
-1. **Repo visibility and license.** Proposal: public repo, Apache-2.0 for our code, CC BY 4.0 for docs, no Enso code redistributed. Confirm or choose MIT/private.
-2. **Board identity.** The copy here is the **ESP32-S2** QT Py; the brief mentions an **ESP32-S3**. Which board is the G4 target? If the S3 board is on the unmounted `/Volumes/dblab` drive, we need a copy.
-3. **Scope of "success."** Is G4 (QT Py signal nets, 0/0) enough, or is the goal a reusable tool for arbitrary boards? This changes how much time goes into generalization vs. the demo.
-4. **Power/ground strategy.** Confirm signal-first, with GND/+3V3 planes handled classically. The prior failure was largely a pour-fragmentation problem; treating power as a separate plane problem is the pragmatic choice.
-5. **Data licensing.** Are PCBench/PCBWorld boards acceptable for training, or only evaluation? We need a per-board manifest before publishing.
-6. **Enso permission.** Do we want to open an issue with the upstream author to ask for a license, or keep our implementation clean-room and cite only?
-7. **Time budget.** Part-time (10–15 h/week) vs. a focused push. The gate estimates assume part-time.
+1. **Project name.** Recommendation: **Groundstate** (working title). Alternatives: Etch, Innerlayer, Weft. Confirm or propose another; see `docs/NAMING.md`.
+2. **Repo visibility and license.** Proposal: public repo, Apache-2.0 for our code, CC BY 4.0 for docs, no Enso code redistributed. Confirm or choose MIT/private.
+3. **Board identity.** The copy here is the **ESP32-S2** QT Py; the brief mentions an **ESP32-S3**. Which board is the G4 target? If the S3 board is on the unmounted `/Volumes/dblab` drive, we need a copy.
+4. **Scope of "success."** Is G4 (QT Py signal nets, 0/0) enough, or is the goal a reusable tool for arbitrary boards? This changes how much time goes into generalization vs. the demo.
+5. **Power/ground strategy.** Confirm signal-first, with GND/+3V3 planes handled classically. The prior failure was largely a pour-fragmentation problem; treating power as a separate plane problem is the pragmatic choice.
+6. **Data licensing.** Are PCBench/PCBWorld boards acceptable for training, or only evaluation? We need a per-board manifest before publishing.
+7. **Human labeling scope.** Is the reviewer willing to label 300–500 gold boards plus 200–500 preference pairs, or should we start with 50 calibration + 100 gold?
+8. **Two-Mac roles.** Task-parallel first (M4 data/DRC, M5 training) is recommended. Is distributed training worth the setup, or should we keep it as a stretch goal?
+9. **Upstream permission.** Optional: open an issue with the Enso author to ask for a license/permission. Not required for a clean-room implementation, but useful if we ever want to reuse code.
+10. **Time budget.** Part-time (10–15 h/week) vs. a focused push. The gate estimates assume part-time.
 
 ---
 
@@ -732,12 +846,18 @@ I am the lead implementation agent: I write the code, run experiments, maintain 
 
 ## Appendix B — Key links
 
-- Enso upstream: https://github.com/MVPandey/Enso (commit `8013c8f`)
+- Enso upstream: https://github.com/MVPandey/Enso (commit `8013c8f`; research reference only)
 - Kona 1.0 / Logical Intelligence: https://logicalintelligence.com/blog/energy-based-model-sudoku-demo
 - I-JEPA: https://arxiv.org/abs/2301.08243
-- IRED: https://arxiv.org/abs/2401.02361
+- IRED: https://arxiv.org/abs/2406.11179
+- JEPA-Reasoner: https://arxiv.org/abs/2512.19171
 - PCBWorld: https://github.com/LGAI-Research/PCBWorld
 - PCBench: https://github.com/PCBench/PCBench
 - KiCad IPC API: https://dev-docs.kicad.org/en/apis-and-binding/ipc-api/
 - MLX: https://github.com/ml-explore/mlx
+- MLX distributed: https://ml-explore.github.io/mlx/build/html/usage/distributed.html
 - QT Py experiment: https://github.com/d4vid-le/qt-py-esp32-s2-experiment
+- Project naming: `docs/NAMING.md`
+- Labeling: `docs/LABELING.md`
+- Provenance: `docs/PROVENANCE.md`
+- Two-Mac setup: `docs/notes/two-mac.md`

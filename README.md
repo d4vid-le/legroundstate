@@ -1,6 +1,11 @@
-# PCB-Enso
+# Groundstate
 
-**An experiment in latent-space energy-based routing for KiCad.**
+**Working title — an experiment in latent-space energy-based routing for KiCad.**
+
+> **Name status:** *Groundstate* is a working title; the final name is pending. The directory
+> is still `pcb-enso` and the Python package is still `pcb_enso` until the rename is confirmed.
+> The project was formerly called PCB-Enso. It is **not** affiliated with Enso/Kona; see
+> [`docs/PROVENANCE.md`](docs/PROVENANCE.md) and [`docs/NAMING.md`](docs/NAMING.md).
 
 Can an Energy-Based Model that reasons globally over a whole board help an AI agent route
 PCBs better than sequential, greedy trace generation? This repo is the plan, the benchmark,
@@ -22,10 +27,11 @@ power geometry was coupled to a different route — not a local pathfinding prob
 That is the kind of coupled constraint satisfaction an EBM is supposed to be good at.
 This project tests whether it actually is.
 
-**The honest version:** Enso's Sudoku weights cannot be fine-tuned into a router. We are
-adapting the *recipe* — context/target encoders, a latent variable, an energy, and Langevin
-optimization — and pairing it with a deterministic detailed router and KiCad's DRC. The EBM
-proposes; KiCad disposes.
+**The honest version:** the Enso Sudoku weights cannot be fine-tuned into a router. We are
+building our **own** JEPA-style latent EBM, adapting the published *recipe* — context/target
+encoders, a latent variable, an energy, and Langevin optimization — and pairing it with a
+deterministic detailed router and KiCad's DRC. The EBM proposes; KiCad disposes. No Enso code
+is copied or redistributed.
 
 ---
 
@@ -77,7 +83,8 @@ reported with the scope difference, not as a direct win.
 
 ## Training on this machine
 
-- **Apple M5 Pro Mac mini**, 18-core CPU, 64 GB unified memory
+- **Primary:** Apple M5 Pro Mac mini, 18-core CPU, 64 GB unified memory
+- **Worker (optional):** Apple M4 Pro Mac mini, 64 GB, linked via Thunderbolt 5
 - **MLX 0.32.4**, Python 3.13
 - Preliminary synthetic benchmark: a 10.8M-parameter transformer at 81 tokens, batch 64,
   runs at ~21 ms/step (~3,000 boards/s) and 5.8 GB peak. A 25.5M model at 121 tokens runs
@@ -86,19 +93,25 @@ reported with the scope difference, not as a direct win.
 Details and caveats: [`docs/notes/mlx-benchmark.md`](docs/notes/mlx-benchmark.md).
 The practical bottleneck will be label generation and DRC, not the neural step.
 
+The M4 Pro is planned as a **data/labeling/DRC worker** first. Distributed training is an
+optional stretch; see [`docs/notes/two-mac.md`](docs/notes/two-mac.md).
+
 ---
 
 ## Repository layout
 
 ```
 docs/
-  PLAN.md              master plan, gates, risks, budget
-  SPEC.md              technical spec v0.2 (tensors, model, energy, inference)
+  PLAN.md              master plan, gates, risks, compute
+  SPEC.md              technical spec (tensors, model, energy, inference)
   RESEARCH.md          prior art, Enso notes, QT Py evidence, references
+  LABELING.md          human-in-the-loop labeling workflow and schema
+  NAMING.md            name candidates, recommendation, rename checklist
+  PROVENANCE.md        clean-room policy and Enso license findings
   DECISIONS.md         ADR log
   JOURNAL.md           progress log
   briefs/              the original v0.1 brief (kept verbatim)
-  notes/               benchmark and research notes
+  notes/               benchmark and two-Mac notes
 boards/
   qt-py-esp32-s2/      reference board snapshot + prior reports (upstream history preserved locally)
 third_party/
@@ -107,7 +120,7 @@ scripts/
   check_env.sh         verify KiCad, MLX, uv, disk
   fetch_enso.sh        fetch pinned upstream Enso (gitignored, no license)
   bench_mlx.py         reproducible MLX throughput benchmark
-src/pcb_enso/          implementation (empty until Phase 0)
+src/pcb_enso/          implementation (empty until Phase 0; rename pending)
 ```
 
 `data/`, `artifacts/`, `third_party/enso/`, and the board's local git history are gitignored.
@@ -139,6 +152,9 @@ scripts/fetch_enso.sh
 | Understand the project and gates | [`docs/PLAN.md`](docs/PLAN.md) |
 | See the tensor/model design | [`docs/SPEC.md`](docs/SPEC.md) |
 | See prior art and evidence | [`docs/RESEARCH.md`](docs/RESEARCH.md) |
+| Design the human labeling pipeline | [`docs/LABELING.md`](docs/LABELING.md) |
+| Choose the project name | [`docs/NAMING.md`](docs/NAMING.md) |
+| Understand the Enso license/clean-room rules | [`docs/PROVENANCE.md`](docs/PROVENANCE.md) |
 | See why decisions were made | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
 | See what happened today | [`docs/JOURNAL.md`](docs/JOURNAL.md) |
 | See the original idea | [`docs/briefs/original-spec.md`](docs/briefs/original-spec.md) |
@@ -151,7 +167,10 @@ scripts/fetch_enso.sh
 - **Our docs:** CC BY 4.0 (proposed).
 - **Enso:** no LICENSE file upstream; default copyright. We do **not** redistribute its code.
   `scripts/fetch_enso.sh` fetches it locally for reference, and `third_party/enso/` is
-  gitignored. The plan is a clean-room MLX reimplementation of the published recipe.
+  gitignored. We build our own JEPA-style EBM from public research; see
+  [`docs/PROVENANCE.md`](docs/PROVENANCE.md).
+- **Human labels:** owned by the project; published only with consent and without personal
+  information. See [`docs/LABELING.md`](docs/LABELING.md).
 - **QT Py reference:** Adafruit's design is CC BY-SA 3.0. The reconstruction retains
   attribution; Adafruit's source files are not committed. See `boards/qt-py-esp32-s2/README.md`.
 - **PCBench / PCBWorld:** per-board licenses; a manifest is required before training or

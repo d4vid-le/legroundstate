@@ -75,3 +75,42 @@ Full details: `docs/notes/mlx-benchmark.md`.
 - The `/Volumes/dblab/Development/projects/kicad` path does not exist on this machine. We are using the copy at `boards/qt-py-esp32-s2/`.
 - Enso upstream has no license; if we want to reuse any code, ask the author first.
 - Need a decision on whether PCBench/PCBWorld boards are acceptable for training or only evaluation.
+
+---
+
+## 2026-11-17 — Session 2: own EBM, human labels, rename
+
+**Goal:** Resolve the Enso dependency, decide whether to build our own model, plan human labeling, and account for the second Mac.
+
+**Decisions (user):**
+
+- **No license → build our own.** Use the research/ideas, not the code. Clean-room MLX implementation.
+- **Rename the project.** “Enso” is out. Working title: **Groundstate** (recommended); alternatives: Etch, Innerlayer, Weft. Final name pending.
+- **Human labels are a first-class data source.** David will review, label, and sort boards for quality. The pipeline must make this fast and consistent.
+- **Second Mac available.** M4 Pro mini, 64 GB, connected via Thunderbolt 5. Use it if needed.
+- **Start in a few days.** Today is planning only.
+
+**What changed in the docs:**
+
+- `docs/NAMING.md` — candidates, recommendation, rename checklist.
+- `docs/PROVENANCE.md` — Enso license findings, clean-room rules, release gate.
+- `docs/LABELING.md` — review schema, UI, QC, active learning, preference loss.
+- `docs/notes/two-mac.md` — TB5, MLX ring, task-parallel vs. data-parallel.
+- `docs/PLAN.md` v0.3 — own EBM, human labels, two-Mac compute, updated gates.
+- `docs/SPEC.md` v0.3 — quality head + preference-ranking energy.
+- `docs/DECISIONS.md` — ADR-0010…0014.
+
+**Key technical conclusions:**
+
+1. **Task parallelism beats distributed training for this workload.** The M4 Pro should generate boards and run DRC while the M5 Pro trains. MLX data-parallel over TB5 is an optional 1.5–1.8× stretch.
+2. **Human labels are not bulk labels.** 300–500 gold boards + 200–500 preference pairs is a realistic target; 10k human labels is not.
+3. **Preference learning is the most interesting EBM lever.** Pairwise “A is better than B” labels directly shape the energy landscape, which is what an EBM is for. It also gives an energy-specific evaluation metric.
+4. **The project name should not carry Enso.** Using “Groundstate” as a working title avoids implying affiliation while we finalize.
+
+**Next:**
+
+1. Choose the project name (human decision).
+2. Confirm the G4 board (S2 copy vs. S3) and repo visibility/license.
+3. Build the KiCad reader + DRC harness → G0.
+4. Toy 16×16 EBM spike → G0.5.
+5. Labeling app + 50-board calibration → G1.

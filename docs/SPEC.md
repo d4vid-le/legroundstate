@@ -1,9 +1,11 @@
-# PCB-Enso — Technical Specification v0.2
+# Groundstate — Technical Specification v0.3
 
 **Status:** Draft
 **Date:** 2026-11-17
+**Working name:** Groundstate (final name pending — see `docs/NAMING.md`)
 **Supersedes:** the per-cell net-ID formulation in `docs/briefs/original-spec.md`
-**Implementation target:** MLX 0.32.4 on Apple M5 Pro, 64 GB unified memory
+**Implementation target:** MLX 0.32.4 on Apple M5 Pro (64 GB) + M4 Pro worker (64 GB, TB5)
+**Provenance:** own implementation; Enso/Kona are research inspiration only (see `docs/PROVENANCE.md`)
 
 ---
 
@@ -223,6 +225,8 @@ L = L_energy
   + λ_v  L_VICReg(z_context)
   + λ_d  L_flow(flow_logits, gt_flow)
   + λ_c  L_constraint(flow_logits)
+  + λ_q  L_quality(head, human_labels)
+  + λ_p  L_preference(energy, human_pairs)
 ```
 
 **L_energy:** `mean(||z_pred − z_target||²)`, with `z_target = L2_normalize(z_encoder(target_encoder(gt)))`.
@@ -238,6 +242,31 @@ L = L_energy
 - Clearance: `Σ_{n≠m} <dilate(f_n, r_c), f_m> / (N(N−1))`, with `r_c` from the rule set.
 - Via-in-pad: `mean(via_prob · pad_mask_other_nets)`.
 - Keep-out: `mean(f · keepout_mask) · 1e3`.
+
+**L_quality (human labels):** a per-board scalar head predicts the human quality (1–5) or
+accept probability. Use a regression/BCE loss on the reviewed boards. This is auxiliary; it
+does not replace the flow loss.
+
+**L_preference (human A/B pairs):** for two DRC-clean routes of the same board, with the human
+preferring A over B:
+
+```
+L_pref = mean(max(0, margin + E(B) − E(A)))
+```
+
+or the Bradley–Terry form:
+
+```
+L_BT = −mean(log σ(E(B) − E(A)))
+```
+
+The energy should be **lower for the preferred route**. Train on the decoded hard routes, not
+only on the latent `z`; otherwise the energy can be gamed by the decoder. Use a margin of
+0.1–0.5 in energy units and normalize energies per board.
+
+**Why this matters:** DRC teaches legality; human preferences teach quality. The preference loss
+is the main research lever for calibrating the energy beyond a rule checker. See
+`docs/LABELING.md`.
 
 ### 6.2 Inference energy
 
@@ -407,12 +436,33 @@ data/l0/train/shard_00000.npz
 
 Use `N` padded to a fixed maximum per shard (e.g., 64 nets). Mask absent nets.
 
-### 9.3 Manifest
+### 9.3 Human label records
+
+SQLite is the source of truth; JSONL exports feed training. The schema is defined in
+`docs/LABELING.md` §3. Minimum fields:
+
+```
+review:     board_id, reviewer, decision, quality(1-5), difficulty(1-5),
+            confidence(1-3), notes, time_ms, label_version, created_at
+issues:     review_id, tag, severity, net, bbox, note
+preference: board_id, route_a, route_b, preferred(a|b|tie), reviewer,
+            confidence, time_ms, created_at
+```
+
+Rules:
+
+- Append-only; corrections are new rows with a new `label_version`.
+- Reviewer ID only; no personal data.
+- Every label records time spent; boards/minute is a UI design metric.
+- 5% hidden duplicates for self-consistency.
+- Export with a manifest hash; never silently edit old labels.
+
+### 9.4 Manifest
 
 One JSONL line per board:
 
 ```
-{"id","family","split","seed","router","drc_errors","drc_unconnected","wirelength","vias","license","source_url","sha256"}
+{"id","family","split","seed","router","drc_errors","drc_unconnected","wirelength","vias","human_quality","human_decision","license","source_url","sha256"}
 ```
 
 Splits are by `family`, not by random row.
@@ -424,7 +474,7 @@ Splits are by `family`, not by random row.
 ### 10.1 Module layout
 
 ```
-src/pcb_enso/
+src/pcb_enso/          # rename pending; see docs/NAMING.md
   mlx/
     encoder.py      # CNN + patch transformer
     decoder.py      # FiLM CNN, flow heads
@@ -492,18 +542,19 @@ These exclude data loading, the fine decoder, and DRC. Use them to size experime
 
 ## 11. Changes from the original brief (v0.1)
 
-| Original brief | v0.2 | Why |
+| Original brief | v0.3 | Why |
 |---|---|---|
 | `(L,H,W,C)` with net ID as an integer | Per-net edge flow on a 3D graph | Net IDs are ordinal; connectivity is edge-based |
 | Cell occupancy only | Edge occupancy + via edges | Paths and DRC are edge properties |
 | 0.25 mm grid | 0.5 / 0.25 / 0.0762 mm hierarchy | 0.25 mm cannot represent 6 mil rules |
-| Flat 8-layer transformer over all cells | CNN + patch transformer at L0 | 254k tokens is infeasible; 42 patch tokens is Enso-scale |
+| Flat 8-layer transformer over all cells | CNN + patch transformer at L0 | 254k tokens is infeasible; 42 patch tokens is the right scale |
 | Soft DRC penalties only | Hard masks + soft surrogates + L2 legalizer + KiCad DRC | Soft penalties cannot guarantee legality |
 | Pure latent Langevin → final copper | Langevin → path extraction → legalizer → repair | Latent optimization alone does not produce DRC-clean geometry |
 | "Hundreds of milliseconds" | Seconds to minutes initially | Honest target; optimize later |
-| Fine-tune Enso Sudoku weights | Train from scratch; reuse the recipe | Modality/shape mismatch |
+| Fine-tune Enso Sudoku weights | Train our own model from scratch; use the published recipe as inspiration | Modality/shape mismatch; Enso has no license |
 | All nets simultaneously | Global EBM all-net plan + net-conditional refinement | Per-net dense tensors at fine resolution are too large |
-| Cloud/H200 assumptions | Local M5 Pro + MLX | User constraint; measured throughput supports it |
+| Cloud/H200 assumptions | Local M5 Pro + M4 Pro worker + MLX | User constraint; measured throughput supports it |
+| DRC-clean is the only label | Machine labels + human quality/preference labels | DRC cannot rank good engineering |
 
 ---
 
@@ -513,9 +564,12 @@ These exclude data loading, the fine decoder, and DRC. Use them to size experime
 2. **Steiner trees:** A single root + multiple sinks is a flow, but the extracted path is a union of root-to-sink paths, not a minimum Steiner tree. Is that good enough, or do we need a Steiner relaxation?
 3. **Negative samples:** JEPA trains on positives. Do we need corrupted routes (broken, shifted, shorted) as explicit high-energy negatives? Enso did not, but routing has a much larger invalid space.
 4. **Energy calibration:** How do we ensure the energy correlates with DRC violations across board families? Measure rank correlation; if it is poor, the Langevin signal is weak.
-5. **Clearance at coarse resolution:** L0/L1 cannot resolve 6 mil clearance. How much clearance information must be passed down to L2? A distance-to-obstacle channel may be enough.
-6. **Layer assignment:** Should vias be decided at L0 or L1? Early via decisions are hard to revise; test both.
-7. **Diff pairs:** Route as two coupled nets with a skew penalty, or route independently and length-match later? Start later.
-8. **Power planes:** How to represent zone/plane intent without teaching the model to route copper pours? Keep it out of the learned problem initially.
-9. **Evaluation:** Is clean-pass rate on 20 real boards enough to claim generalization, or do we need 100+? Start with 20–50 and report confidence intervals.
-10. **MLX limits:** Are there ops we need that MLX lacks (e.g., sparse solves, complex eigendecomposition)? Prefer conv/local formulations; fall back to CPU NumPy for one-off geometry.
+5. **Preference calibration:** Can human A/B labels shape the energy better than DRC-only training? Measure preference accuracy and energy–quality correlation on held-out boards. If yes, this is the most interesting result.
+6. **Human label noise:** One reviewer, subjective quality. How stable are the labels? Use hidden duplicates and a calibration set; report self-consistency.
+7. **Clearance at coarse resolution:** L0/L1 cannot resolve 6 mil clearance. How much clearance information must be passed down to L2? A distance-to-obstacle channel may be enough.
+8. **Layer assignment:** Should vias be decided at L0 or L1? Early via decisions are hard to revise; test both.
+9. **Diff pairs:** Route as two coupled nets with a skew penalty, or route independently and length-match later? Start later.
+10. **Power planes:** How to represent zone/plane intent without teaching the model to route copper pours? Keep it out of the learned problem initially.
+11. **Evaluation:** Is clean-pass rate on 20 real boards enough to claim generalization, or do we need 100+? Start with 20–50 and report confidence intervals.
+12. **Two-Mac scaling:** Does data-parallel training over TB5 give a real speedup on this model, or is task-parallel data generation the better use? Benchmark at G3.
+13. **MLX limits:** Are there ops we need that MLX lacks (e.g., sparse solves, complex eigendecomposition)? Prefer conv/local formulations; fall back to CPU NumPy for one-off geometry.
