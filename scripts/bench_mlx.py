@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Reproducible MLX throughput benchmark for PCB-Enso.
+"""Reproducible MLX throughput benchmark for LeGroundstate.
 
 This measures synthetic tensors only: it is an upper bound on the neural
 compute, not an end-to-end PCB model or data-pipeline benchmark.

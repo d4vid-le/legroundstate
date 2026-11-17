@@ -20,7 +20,7 @@ per-source licenses; they are not committed.
 
 | Source | How | License check |
 |---|---|---|
-| Synthetic generator | `src/pcb_enso/data/synthetic.py` (Phase 1) | Ours |
+| Synthetic generator | `src/legroundstate/data/synthetic.py` (Phase 1) | Ours |
 | QT Py snapshot | `boards/qt-py-esp32-s2/` | CC BY-SA 3.0; held out |
 | PCBench | GitHub release / `tools/prepare_pcbench.sh` | Per-board; record in manifest |
 | PCBWorld D3 | `tools/quickstart/prepare_pcbench.sh` | Code BSD-3; boards per-project |
@@ -45,6 +45,6 @@ data/
 
 ## Reproduce
 
-The generators and downloaders live in `scripts/` and `src/pcb_enso/data/` once Phase 1
+The generators and downloaders live in `scripts/` and `src/legroundstate/data/` once Phase 1
 begins. The plan is in `docs/PLAN.md` §6; the schema is in `docs/SPEC.md` §9; the human
 labeling workflow is in `docs/LABELING.md`.

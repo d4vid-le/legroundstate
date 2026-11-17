@@ -72,8 +72,8 @@ References:
 
 ## 6. Our code and data
 
-- Our code: Apache-2.0 (proposed; see ADR-0008).
-- Our docs: CC BY 4.0 (proposed).
+- Our code: MIT (see `LICENSE`; ADR-0008).
+- Our docs: CC BY 4.0 (see `LICENSE-docs`).
 - Human labels: owned by the project; published only with the reviewer's consent and without
   personal information.
 - Third-party boards: per-board licenses; see `docs/RESEARCH.md` §6 and `data/README.md`.

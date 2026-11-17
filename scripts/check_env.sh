@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify the local toolchain for PCB-Enso.
+# Verify the local toolchain for LeGroundstate.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -9,7 +9,7 @@ KICAD_CLI="${KICAD_CLI:-/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli}"
 BOARD="boards/qt-py-esp32-s2/rebuild/qt-py-esp32-s2.kicad_pcb"
 ok=0
 
-printf 'PCB-Enso environment check\n'
+printf 'LeGroundstate environment check\n'
 printf 'workspace: %s\n\n' "$ROOT"
 
 printf '%-22s' "macOS:"

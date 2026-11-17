@@ -114,3 +114,39 @@ Full details: `docs/notes/mlx-benchmark.md`.
 3. Build the KiCad reader + DRC harness → G0.
 4. Toy 16×16 EBM spike → G0.5.
 5. Labeling app + 50-board calibration → G1.
+
+---
+
+## 2026-11-17 — Session 3: LeGroundstate, MIT, public repo, label volume
+
+**Goal:** Finalize the name, license, repo visibility, board target, and first labeling volume.
+
+**Decisions (user):**
+
+- **Name: LeGroundstate.** Display `LeGroundstate`; repo/package/CLI `legroundstate`. The “Le” is personal; “groundstate” is the EBM energy minimum + PCB ground plane.
+- **Board: ESP32-S2 confirmed.** The earlier S3 mention was a mix-up. The local QT Py snapshot is the G4 target.
+- **License: MIT for code**, matching the DeepSeek open-weight approach; CC BY 4.0 for docs.
+- **Public repository.** Publish `d4vid-le/legroundstate`.
+- **Labeling volume: 50 calibration + 100 gold**, then expand only if the labels are consistent and useful.
+
+**Actions taken:**
+
+- Renamed the workspace folder to `legroundstate`.
+- Renamed the Python package to `src/legroundstate/`.
+- Updated `pyproject.toml`, tests, scripts, and docs.
+- Added `LICENSE` (MIT), `LICENSE-docs` (CC BY 4.0), and `THIRD_PARTY.md`.
+- Marked ADR-0008 (licenses), ADR-0011 (label volume), and ADR-0013 (name) accepted.
+- Rewrote `docs/NAMING.md` as a decision record.
+
+**Notes:**
+
+- The board snapshot remains CC BY-SA 3.0; the root MIT license does not override it. `THIRD_PARTY.md` is the source of truth.
+- The Enso source remains gitignored and is not redistributed.
+- The first gold set is intentionally small. 50 calibration + 100 gold is enough to test whether human preference labels improve the energy; 300–500 is a later decision, not a prerequisite.
+
+**Next:**
+
+1. Publish the repo.
+2. Start Phase 0: KiCad reader + DRC harness → G0.
+3. Toy 16×16 EBM spike → G0.5.
+4. Labeling app + 50-board calibration → G1.

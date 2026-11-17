@@ -1,11 +1,14 @@
-# Groundstate
+# LeGroundstate
 
-**Working title — an experiment in latent-space energy-based routing for KiCad.**
+**An experiment in latent-space energy-based routing for KiCad.**
 
-> **Name status:** *Groundstate* is a working title; the final name is pending. The directory
-> is still `pcb-enso` and the Python package is still `pcb_enso` until the rename is confirmed.
-> The project was formerly called PCB-Enso. It is **not** affiliated with Enso/Kona; see
-> [`docs/PROVENANCE.md`](docs/PROVENANCE.md) and [`docs/NAMING.md`](docs/NAMING.md).
+> **Name:** LeGroundstate. The repository, Python package, and CLI use the lowercase form
+> `legroundstate`. The project was formerly called PCB-Enso; it is **not** affiliated with
+> Enso/Kona. See [`docs/PROVENANCE.md`](docs/PROVENANCE.md) and
+> [`docs/NAMING.md`](docs/NAMING.md).
+>
+> **License:** MIT for code, CC BY 4.0 for docs. Third-party components retain their own
+> licenses; see [`THIRD_PARTY.md`](THIRD_PARTY.md).
 
 Can an Energy-Based Model that reasons globally over a whole board help an AI agent route
 PCBs better than sequential, greedy trace generation? This repo is the plan, the benchmark,
@@ -120,7 +123,8 @@ scripts/
   check_env.sh         verify KiCad, MLX, uv, disk
   fetch_enso.sh        fetch pinned upstream Enso (gitignored, no license)
   bench_mlx.py         reproducible MLX throughput benchmark
-src/pcb_enso/          implementation (empty until Phase 0; rename pending)
+src/legroundstate/     implementation (empty until Phase 0)
+THIRD_PARTY.md         third-party licenses and attribution
 ```
 
 `data/`, `artifacts/`, `third_party/enso/`, and the board's local git history are gitignored.
@@ -153,7 +157,7 @@ scripts/fetch_enso.sh
 | See the tensor/model design | [`docs/SPEC.md`](docs/SPEC.md) |
 | See prior art and evidence | [`docs/RESEARCH.md`](docs/RESEARCH.md) |
 | Design the human labeling pipeline | [`docs/LABELING.md`](docs/LABELING.md) |
-| Choose the project name | [`docs/NAMING.md`](docs/NAMING.md) |
+| See the naming decision | [`docs/NAMING.md`](docs/NAMING.md) |
 | Understand the Enso license/clean-room rules | [`docs/PROVENANCE.md`](docs/PROVENANCE.md) |
 | See why decisions were made | [`docs/DECISIONS.md`](docs/DECISIONS.md) |
 | See what happened today | [`docs/JOURNAL.md`](docs/JOURNAL.md) |
@@ -163,8 +167,10 @@ scripts/fetch_enso.sh
 
 ## Licensing and provenance
 
-- **Our code:** Apache-2.0 (proposed — see ADR-0008).
-- **Our docs:** CC BY 4.0 (proposed).
+- **Our code:** MIT (see [`LICENSE`](LICENSE)).
+- **Our docs:** CC BY 4.0 (see [`LICENSE-docs`](LICENSE-docs)).
+- **Third-party components:** see [`THIRD_PARTY.md`](THIRD_PARTY.md). The QT Py snapshot is
+  CC BY-SA 3.0; Enso is not included.
 - **Enso:** no LICENSE file upstream; default copyright. We do **not** redistribute its code.
   `scripts/fetch_enso.sh` fetches it locally for reference, and `third_party/enso/` is
   gitignored. We build our own JEPA-style EBM from public research; see

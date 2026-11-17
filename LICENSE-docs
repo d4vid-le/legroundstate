@@ -1,0 +1,16 @@
+# Documentation license
+
+The documentation in this repository (files under `docs/`, the README, and
+other prose) is licensed under the **Creative Commons Attribution 4.0
+International License (CC BY 4.0)**.
+
+You are free to share and adapt the documentation for any purpose, provided
+you give appropriate credit, link to the license, and indicate if changes were
+made.
+
+- License deed: https://creativecommons.org/licenses/by/4.0/
+- Legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Copyright (c) 2026 David Le and contributors.
+
+Third-party material retains its own license; see `THIRD_PARTY.md`.

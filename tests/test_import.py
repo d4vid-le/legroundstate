@@ -1,4 +1,4 @@
-from pcb_enso import __version__
+from legroundstate import __version__
 
 
 def test_version() -> None:

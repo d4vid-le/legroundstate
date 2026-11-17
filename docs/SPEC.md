@@ -1,8 +1,9 @@
-# Groundstate — Technical Specification v0.3
+# LeGroundstate — Technical Specification v0.3
 
 **Status:** Draft
 **Date:** 2026-11-17
-**Working name:** Groundstate (final name pending — see `docs/NAMING.md`)
+**Project name:** LeGroundstate (repo/package/CLI: `legroundstate`)
+**License:** MIT for code; CC BY 4.0 for docs
 **Supersedes:** the per-cell net-ID formulation in `docs/briefs/original-spec.md`
 **Implementation target:** MLX 0.32.4 on Apple M5 Pro (64 GB) + M4 Pro worker (64 GB, TB5)
 **Provenance:** own implementation; Enso/Kona are research inspiration only (see `docs/PROVENANCE.md`)
@@ -474,7 +475,7 @@ Splits are by `family`, not by random row.
 ### 10.1 Module layout
 
 ```
-src/pcb_enso/          # rename pending; see docs/NAMING.md
+src/legroundstate/
   mlx/
     encoder.py      # CNN + patch transformer
     decoder.py      # FiLM CNN, flow heads

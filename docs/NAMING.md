@@ -1,72 +1,62 @@
 # Naming
 
-**Status:** Open — working title **Groundstate**, final name pending
-**Date:** 2026-11-17
+**Status:** Decided — **LeGroundstate** (2026-11-17)
+**Display name:** LeGroundstate
+**Repository / Python package / CLI:** `legroundstate`
 
-The project needs a name that is:
+---
 
-- **Not Enso.** We are not affiliated with the Enso/Kona work and should not imply otherwise.
-- **Domain-native.** A PCB engineer should have a hint of what it does.
-- **Research-credible.** It should sound like a method/project, not a generic SaaS product.
-- **Short and unambiguous.** It becomes a repo, Python package, CLI, and model name.
-- **Low-collision.** Avoid names already used by EDA, ML, or routing projects.
-- **Trademark-clean enough for a public research repo.** Not a guarantee; a sanity check.
+## Decision
 
-## Candidates
+**LeGroundstate** — “LeGroundstate: energy-based routing for KiCad.”
 
-| Name | Rationale | Pros | Cons |
-|---|---|---|---|
-| **Groundstate** *(recommended)* | EBM inference finds a low-energy **ground state**; the board has a **ground plane**. | Strong double meaning; short; research-y; `groundstate route` reads well | Physics/quantum associations; not PCB-specific on its own |
-| **Etch** | PCB copper is **etched** to leave traces. | Very short; domain-native; memorable; `etch route` | Generic verb; doesn't convey EBM/latent; possible etching-service confusion |
-| **Innerlayer** | PCB **inner layers** + latent/hidden layers in a neural network. | Clever double meaning; unique; `innerlayer route` | Longer; sounds like a PCB stackup tool |
-| **Ariadne** | Ariadne's thread guided Theseus through the labyrinth; traces are threads through a routing maze. | Evocative; strong metaphor | Longer; `ariadne-routing` already exists (network routing); literary |
-| **Weft** | The crosswise thread in weaving; traces weave through the board. | Short; unique; evocative | Obscure; no PCB/EBM hint |
-| **Copperflow** | Copper + flow-based routing representation. | Descriptive; fits the method | `copperflow` repo already exists; generic product sound |
-| **Anneal** | Langevin/annealing is the inference method. | Method-native; short | Common word; many ML projects |
+The name combines:
 
-**Collision notes (quick GitHub search, 2026-11-17):**
+- **“Le”** — David Le's name; personal ownership of the project.
+- **“Groundstate”** — the low-energy state an EBM searches for, and the ground plane of a PCB.
 
-- `copperflow` — existing repo (`kurpeeren/copperflow`, circuits-in-code).
-- `ariadne-routing` — existing repo.
-- `groundstate pcb`, `etch pcb routing`, `innerlayer pcb`, `weft routing` — no obvious PCB-routing collision in the quick search.
+It is distinctive, memorable, and does not use the Enso name or imply affiliation.
 
-## Recommendation
+### Styling rules
 
-**Groundstate** — “Groundstate: energy-based routing for KiCad.”
+| Context | Form |
+|---|---|
+| Prose, docs, paper title | **LeGroundstate** |
+| GitHub repository | `legroundstate` |
+| Python package / imports | `legroundstate` |
+| CLI | `legroundstate` |
+| Model artifacts | `legroundstate-l0-*.safetensors` |
+| Dataset names | `legroundstate-l0-v0` |
 
-Why:
+Avoid all-caps `LEGROUNDSTATE` and the spaced `Le Groundstate` in code. In a wordmark,
+“Le” may be lighter than “Groundstate,” but the repo stays lowercase.
 
-1. The EBM's whole idea is finding a low-energy state; “ground state” is the physics term for the minimum.
-2. Every PCB has a ground plane; the name is native to the domain without being literal.
-3. It reads well as a project, a model, and a CLI: **Groundstate**, the Groundstate EBM, `groundstate route`.
-4. It does not ride on the Enso name or imply affiliation.
-5. It leaves room for a method name: **Latent Flow EBM** (the model), **Groundstate** (the project).
+## Why not the alternatives
 
-Runner-up: **Etch** — if we want something shorter and more product-like.
+| Name | Why not |
+|---|---|
+| **Etch** | Strong PCB-native name, but generic and doesn't convey the EBM/energy angle |
+| **Innerlayer** | Clever PCB + latent-layer pun, but long and sounds like a stackup tool |
+| **Ariadne** | Great labyrinth metaphor, but `ariadne-routing` already exists |
+| **Weft** | Evocative, but obscure and no PCB/EBM hint |
+| **Copperflow** | Descriptive, but an existing `copperflow` repo |
 
-## If Groundstate is chosen
+LeGroundstate keeps the energy/ground-plane meaning and adds a personal signature.
 
-Rename checklist:
+## Rename executed (2026-11-17)
 
-- [ ] GitHub repository: `d4vid-le/groundstate`
-- [ ] Workspace folder: `groundstate/` (use `mv` + `opencode.session_move` if needed)
-- [ ] Python package: `src/groundstate/`, imports `groundstate.*`
-- [ ] `pyproject.toml`: `name = "groundstate"`, script entry `groundstate`
-- [ ] README title, badges, quick start
-- [ ] All docs titles and cross-links
-- [ ] `scripts/` names and help text
-- [ ] Model artifact names: `groundstate-l0-*.safetensors`
-- [ ] Dataset names: `groundstate-l0-v0`
-- [ ] Environment variables: `GROUNDSTATE_*`
-- [ ] Citation/acknowledgement: “formerly working title PCB-Enso”
-- [ ] Add a `PROVENANCE.md` note that the rename avoids implying affiliation with Enso
+- [x] GitHub repository: `d4vid-le/legroundstate` (public)
+- [x] Workspace folder: `legroundstate/`
+- [x] Python package: `src/legroundstate/`, imports `legroundstate.*`
+- [x] `pyproject.toml`: `name = "legroundstate"`
+- [x] README title, docs, scripts
+- [x] Model/dataset naming convention
+- [x] Provenance note: formerly working title `PCB-Enso`; no affiliation with Enso/Kona
+- [x] MIT license for code; CC BY 4.0 for docs
 
-Do the rename **once**, after the name is confirmed, in a single commit. Until then, docs
-use “Groundstate (working title)” and the directory remains `pcb-enso`.
-
-## Naming rules for the codebase
+## Rules
 
 - The model is a **JEPA-style latent EBM**, not “Enso”.
-- In docs, say “inspired by Enso/Kona” only in the research/provenance sections.
-- Never use “Enso” in the project name, package name, CLI, or model artifact names.
+- In docs, say “inspired by Enso/Kona” only in research/provenance sections.
+- Never use “Enso” in the project name, package, CLI, or model artifact names.
 - In a paper/blog, cite Enso and Kona; do not imply endorsement.

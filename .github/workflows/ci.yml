@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Ruff
+        run: uvx ruff check .
+
+      - name: Markdown links
+        run: python3 scripts/check_links.py
+
+      - name: Unit tests (no MLX required)
+        run: PYTHONPATH=src uvx pytest -q

@@ -1,7 +1,7 @@
-# Groundstate — Research Notes
+# LeGroundstate — Research Notes
 
 **Date:** 2026-11-17
-**Working name:** Groundstate (final name pending — see `docs/NAMING.md`)
+**Project name:** LeGroundstate (repo/package/CLI: `legroundstate`)
 **Purpose:** Ground the project in prior work, the EBM/JEPA recipe, human preference learning, and the QT Py evidence.
 
 ---

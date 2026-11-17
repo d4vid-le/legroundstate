@@ -22,8 +22,8 @@ replication" in the README is a description, not a license grant.
 4. Implement our own EBM independently in MLX and cite Enso/Kona.
 5. If we want to reuse code, ask the upstream author for explicit permission first.
 
-**Project position (2026-11-17):** We are building our own JEPA-style EBM (working title
-**Groundstate**) rather than forking Enso. Enso is research inspiration only. See
+**Project position (2026-11-17):** We are building our own JEPA-style EBM
+(**LeGroundstate**) rather than forking Enso. Enso is research inspiration only. See
 `docs/PROVENANCE.md` for the clean-room policy and release gate.
 
 ### Why keep it at all?

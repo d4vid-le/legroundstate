@@ -10,7 +10,7 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 
 **Context:** The machine is an Apple M5 Pro Mac mini with 64 GB unified memory. The user wants to train locally with MLX. Enso is PyTorch/CUDA-oriented; cloud GPUs are not in the base plan.
 
-**Decision:** Implement Groundstate in MLX 0.32.4 + Python 3.13. Use PyTorch only as an optional reference for parity checks, never as the training path. Design model sizes and grid resolutions around the measured local throughput.
+**Decision:** Implement LeGroundstate in MLX 0.32.4 + Python 3.13. Use PyTorch only as an optional reference for parity checks, never as the training path. Design model sizes and grid resolutions around the measured local throughput.
 
 **Consequences:**
 
@@ -130,25 +130,27 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 
 ---
 
-## ADR-0008 — License proposal
+## ADR-0008 — Public repository and licenses
 
-**Status:** Proposed — pending human approval
+**Status:** Accepted (2026-11-17)
 
-**Context:** We will publish code, docs, data manifests, and possibly model weights. Enso is unlicensed; the QT Py reference is CC BY-SA 3.0; PCBench/PCBWorld boards have per-board licenses.
+**Context:** We will publish code, docs, data manifests, and possibly model weights. Enso is unlicensed; the QT Py reference is CC BY-SA 3.0; PCBench/PCBWorld boards have per-board licenses. The user chose a public repo and MIT for code, matching the DeepSeek open-weight licensing approach.
 
-**Decision (proposal):**
+**Decision:**
 
-- Our code: **Apache-2.0** (patent grant; friendly to research and commercial reuse).
-- Our docs: **CC BY 4.0**.
-- Our model weights (if released): **Apache-2.0**, subject to a data-provenance review.
+- Repository: **public**, `d4vid-le/legroundstate`.
+- Our code: **MIT** (see `LICENSE`).
+- Our docs: **CC BY 4.0** (see `LICENSE-docs`).
+- Our model weights (if released): **MIT**, subject to a data-provenance review.
 - Enso: not redistributed; cited only.
-- QT Py: attribution + share-alike notice; no Adafruit source files redistributed.
+- QT Py: attribution + share-alike notice; no Adafruit source files redistributed; see `THIRD_PARTY.md`.
 - PCBench/PCBWorld: per-board manifest; only permissive boards in any released dataset.
 
 **Consequences:**
 
-- A license audit is a release gate.
-- If the user prefers MIT or a private repo, only this ADR changes.
+- A license/provenance audit is a release gate.
+- Third-party components retain their licenses; `THIRD_PARTY.md` is the source of truth.
+- MIT does not grant rights to unlicensed Enso code; none is included.
 
 ---
 
@@ -202,6 +204,7 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 - Human labels provide a gold set: accept/reject, quality, difficulty, issue tags, and blind A/B preferences.
 - Train a quality head and a preference-ranking energy term.
 - Use active learning to spend the reviewer's time on uncertain/disagreement cases.
+- **Start with 50 calibration + 100 gold boards; expand to 300+ only if the first batch is consistent and useful.**
 - Label schema and tool: `docs/LABELING.md`.
 
 **Consequences:**
@@ -234,19 +237,20 @@ Format: **Status — Context — Decision — Consequences.** Append-only; super
 
 ---
 
-## ADR-0013 — Working title Groundstate; rename pending
+## ADR-0013 — Project renamed to LeGroundstate
 
-**Status:** Proposed (2026-11-17)
+**Status:** Accepted (2026-11-17)
 
-**Context:** The user wants a name other than Enso. The project currently lives in a folder and package named `pcb-enso`, which is a working title and implies a relationship we do not have.
+**Context:** The user wants a name other than Enso. “LeGroundstate” combines the owner's name with the EBM's low-energy “ground state” and the PCB ground plane. The project previously lived in a folder/package called `pcb-enso`, which implied a relationship we do not have.
 
-**Decision:** Use **Groundstate** as the working title in docs. Keep the directory and package names until the user confirms. Perform the rename once, in a single commit, using the checklist in `docs/NAMING.md`.
+**Decision:** Name the project **LeGroundstate**; use `legroundstate` for the repository, Python package, CLI, model artifacts, and dataset names. Execute the rename in one commit and update all docs/imports/config.
 
 **Consequences:**
 
-- No half-renamed code.
-- Docs say “Groundstate (working title)” and `pcb-enso` is marked as the legacy/working path.
-- The final repo/package/CLI name is a human decision.
+- The legacy name `PCB-Enso` appears only in provenance/history notes.
+- No “Enso” in the project/package/CLI names.
+- The GitHub repository is `d4vid-le/legroundstate`.
+- No half-renamed code remains.
 
 ---
 

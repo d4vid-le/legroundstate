@@ -204,12 +204,13 @@ degenerate candidates first. The human's time goes to borderline, high-informati
 | Stage | Boards | Time estimate |
 |---|---:|---:|
 | Calibration | 50 | ~45 min |
-| Gold evaluation set | 300–500 | 4–7 hours |
-| Preference pairs | 200–500 | 3–6 hours |
-| Optional fine-tune set | 1,000+ | 12–20 hours |
+| Gold evaluation set | 100 | 1.5–2.5 hours |
+| Preference pairs | 100–200 | 1.5–3 hours |
+| Optional expansion | 300+ | later, after label consistency is proven |
 
-Start with **50 calibration + 300 gold**. Do not attempt 10k human labels. Human labels are
-the gold set; synthetic/classical labels are the bulk pretraining set.
+Start with **50 calibration + 100 gold**. Do not attempt 10k human labels. Human labels are
+the gold set; synthetic/classical labels are the bulk pretraining set. Expand to 300+ only if
+the first 100 are consistent and actually improve the model.
 
 ## 8. How labels are used
 
@@ -272,7 +273,7 @@ The gold set is frozen and family-split. Report:
 **Phase 1 deliverables:**
 
 - `tools/review/` — FastAPI + SQLite + static frontend.
-- `groundstate label` CLI (name TBD) — import boards, export labels.
+- `legroundstate label` CLI — import boards, export labels.
 - `scripts/collect_boards.py` — download/scan candidate boards, record source + license.
 - `scripts/curate.py` — import a board into the review queue; run DRC/tensor sanity.
 - `scripts/export_labels.py` — immutable JSONL export + manifest hash.
@@ -301,4 +302,4 @@ The gold set is frozen and family-split. Report:
 3. Agent pre-scores and selects 50 for calibration.
 4. Review with the rubric; measure time and self-consistency.
 5. Adjust the rubric/UI; freeze `labels_v1`.
-6. Only then expand to the 300-board gold set.
+6. Only then expand to the 100-board gold set.
