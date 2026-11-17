@@ -156,7 +156,7 @@ The important lessons from the Enso training log are not the Sudoku numbers. The
 
 - Enso's Sudoku weights do not transfer. The input is 10 channels of 9×9 digits; ours is a multi-layer spatial board. We will train from scratch.
 - "Open-source" is not the same as "licensed." The upstream repository has **no LICENSE file** and GitHub reports no license. Default copyright applies. We will not copy its code into this repo. See `docs/PROVENANCE.md`.
-- We are not "Enso for PCBs," and we are not affiliated with the Enso or Kona authors. The project will get its own name; see `docs/NAMING.md`.
+- We are not "Enso for PCBs," and we are not affiliated with the Enso or Kona authors. The project is **LeGroundstate**; see `docs/NAMING.md`.
 - A 36.5M-parameter model on an H200 is not the target. We are designing for a 64 GB M5 Pro and a much smaller, spatially structured model.
 
 ---

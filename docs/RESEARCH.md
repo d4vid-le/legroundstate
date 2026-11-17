@@ -57,7 +57,7 @@ Enso has **no license**, so this is a clean-room implementation. The legal disti
 | Source code, comments, docstrings, identifiers | **No** | Do not copy |
 | README prose, figures, tables | **No** | Do not copy; write our own |
 | Model weights | **No** | None needed; train from scratch |
-| Project name “Enso” | **No** | Use our own name |
+| Project name “Enso” | **No** | Use LeGroundstate |
 
 We implement from the public method descriptions and the JEPA papers (I-JEPA, IRED,
 JEPA-Reasoner), not by translating Enso's PyTorch files. See `docs/PROVENANCE.md` for the

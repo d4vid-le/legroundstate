@@ -111,7 +111,7 @@ docs/
   SPEC.md              technical spec (tensors, model, energy, inference)
   RESEARCH.md          prior art, Enso notes, QT Py evidence, references
   LABELING.md          human-in-the-loop labeling workflow and schema
-  NAMING.md            name candidates, recommendation, rename checklist
+  NAMING.md            name decision and rename record
   PROVENANCE.md        clean-room policy and Enso license findings
   DECISIONS.md         ADR log
   JOURNAL.md           progress log
