@@ -54,6 +54,14 @@ Full details: `docs/notes/mlx-benchmark.md`.
 - **The previous failure was global, not local.** The GND pours fragmented because signal routing took the corridors; fixing it required rerouting signals. This is exactly the kind of coupled constraint an EBM should reason about — or fail to, which is the experiment.
 - **The board in this folder is the ESP32-S2, not the S3.** The brief mentions an S3; the copy here is the S2. Need to confirm the G4 target.
 
+**Revision (same day):** The user confirmed the training target is this Mac mini (M5 Pro, 64 GB) with **MLX**, not cloud/PyTorch. The plan was revised to v0.2:
+
+- MLX-first implementation; PyTorch is not a dependency.
+- Model sized for local throughput (5–15M params, 0.5 mm coarse grid, 42–121 tokens).
+- Three-level hierarchy added so the fine 0.0762 mm grid is convolutional/classical, not attention.
+- Compute section is now local-only, $0; the measured MLX benchmark replaced the H200 assumptions.
+- Enso license confirmed absent; clean-room reimplementation is an explicit ADR.
+
 **Next:**
 
 1. Confirm repo visibility/license and the G4 board (S2 vs. S3).

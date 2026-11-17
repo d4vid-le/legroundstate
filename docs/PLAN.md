@@ -31,7 +31,7 @@
 
 The EBM is the **global planner**, not the geometry generator. KiCad's DRC is the ground truth. This hybrid is deliberately less glamorous than end-to-end pixel routing, and much more likely to produce a board that passes.
 
-**First real milestone (Gate G4).** On a from-scratch, unrouted QT Py ESP32-S2 board, route the **signal nets** to **0 unconnected / 0 DRC errors**, beating the prior 8–9 unconnected peak. Power/ground planes are handled classically and measured separately.
+**First real milestone (Gate G4).** On a from-scratch, unrouted QT Py ESP32-S2 board, route the **signal nets** to **0 signal-net unconnected / 0 DRC errors**. Power/ground planes are handled classically, measured separately, and the scope difference from the prior 8–9 unconnected full-board peak is stated explicitly.
 
 **First two weeks.** Build the KiCad I/O + DRC harness, the board tensorizer, the classical baselines, and the MLX training skeleton. Do not train a routing model until Gate G0 (I/O fidelity) passes.
 
@@ -481,6 +481,22 @@ Use PCBWorld's `@5` protocol for external comparisons where applicable: five rol
 - Tensorizer overlay matches the board render within visual tolerance.
 - A deliberately broken track produces the expected DRC failure.
 
+### Phase 0.5 — EBM recipe spike (week 3)
+
+**Deliverables:**
+
+- Tiny synthetic boards: 4–8 nets, 16×16 grid, 2 layers, no obstacles.
+- A 1–2M-parameter MLX PCB-JEPA (CNN encoder/decoder, small latent).
+- Train for a few hours; run forward-only and Langevin inference.
+- A short note: does the recipe fit the toy task at all?
+
+**Gate G0.5 — Recipe sanity:**
+- The model fits the toy set (e.g., >80% edge accuracy and >50% nets connected after extraction).
+- Langevin runs stably (no NaNs, energy decreases).
+- If it cannot fit a toy task, debug the recipe before building the data engine.
+
+This is a deliberate cheap failure point. It is much cheaper to discover a broken energy/latent design on 16×16 boards than on 10k DRC-checked boards.
+
 ### Phase 1 — Data engine v0 (weeks 3–5)
 
 **Deliverables:**
@@ -538,9 +554,9 @@ Train a small supervised model for each. Evaluate after path extraction + legali
 
 **Gate G4 — QT Py signal route (headline):**
 - From a from-scratch, unrouted board, route all signal nets.
-- **0 unconnected / 0 error-level DRC violations.**
-- Power/ground plane handling measured separately; no hidden waivers.
-- Beat the prior 8–9 unconnected peak on the same scope.
+- **0 signal-net unconnected / 0 error-level DRC violations.**
+- Power/ground planes pre-existing and DRC-clean; measured and reported separately. No hidden waivers.
+- Compare to the prior independent signal-routing peak (8–9 unconnected on the full board). The scopes differ because the prior attempt included power nets; report both numbers and do not claim a direct win without a matched scope.
 - Report wirelength/vias vs. reference; do not require beating the reference.
 
 ### Phase 5 — Scale, external benchmark, write-up (weeks 14+)
@@ -556,10 +572,11 @@ Train a small supervised model for each. Evaluate after path extraction + legali
 | Gate | Question | Pass criterion | If fail |
 |---|---|---|---|
 | G0 | Can we read/write/verify boards faithfully? | Round-trip + DRC parity | Fix I/O before any ML |
+| G0.5 | Does the recipe fit a toy task? | >80% edge accuracy, >50% nets connected | Fix energy/latent before data |
 | G1 | Do we have enough trustworthy labels? | 10k boards, 90% easy clean | Improve generator/labeler |
 | G2 | Which representation? | Clear winner on clean pass | Simplify; pick B if C ties |
 | G3 | Does Langevin add value? | +3 pts clean pass | Pivot to feed-forward hybrid |
-| G4 | Does it route the QT Py? | 0 unconnected / 0 DRC | Narrow scope; report honestly |
+| G4 | Does it route the QT Py? | 0 signal-net unconnected / 0 DRC | Narrow scope; report honestly |
 | G5 | Does it generalize? | Competitive with Freerouting on B3 | Publish negative result + harness |
 
 ### First ten working sessions
@@ -569,10 +586,10 @@ Train a small supervised model for each. Evaluate after path extraction + legali
 3. DRC runner + metrics JSON + golden test.
 4. Tensorizer L0/L1/L2 + overlay render.
 5. No-op round-trip → **G0**.
-6. Freerouting baseline + A* baseline.
-7. Synthetic generator v0.
-8. Labeler + DRC filter.
-9. Dataset sharding + splits + manifest.
+6. Toy 16×16 MLX JEPA spike → **G0.5**.
+7. Freerouting baseline + A* baseline.
+8. Synthetic generator v0.
+9. Labeler + DRC filter + dataset sharding/manifest.
 10. **G1** review + go/no-go.
 
 ---
@@ -631,10 +648,11 @@ These are forward+backward on synthetic tensors; the full model, data loading, f
 | 6 | Overfits to the QT Py | Medium | High | Held-out board; family splits; B3 real boards | G4 vs. G5 gap |
 | 7 | MLX limitation / missing op | Medium | Medium | Conv/local losses; `mx.linalg`; custom Metal only if needed | Blocked >1 day |
 | 8 | Local compute too slow | Low–Medium | Medium | Small models, coarse grids, `mx.compile`, fixed shapes | Throughput < target |
-| 9 | License / provenance problem | Medium | High | No Enso code copied; per-board data manifest; legal review before release | Pre-release |
-| 10 | Scope creep | High | High | Signal nets first; 2/4 layers; no HDI; gates | Any out-of-scope work |
-| 11 | Silent DRC waivers / cherry-picking | Low | High | Fresh `kicad-cli` DRC on saved board; JSON artifacts; journal | Any claim |
-| 12 | Board damage / bad fabrication | Low | High | Experimental only; human review; no fabrication | Release |
+| 9 | Coarse grid cannot resolve fine-pitch fan-out | High | Medium | Multi-net pad conflict flag; L2 exact fan-out; 0.1 mm local window if needed | G2/G4 |
+| 10 | License / provenance problem | Medium | High | No Enso code copied; per-board data manifest; legal review before release | Pre-release |
+| 11 | Scope creep | High | High | Signal nets first; 2/4 layers; no HDI; gates | Any out-of-scope work |
+| 12 | Silent DRC waivers / cherry-picking | Low | High | Fresh `kicad-cli` DRC on saved board; JSON artifacts; journal | Any claim |
+| 13 | Board damage / bad fabrication | Low | High | Experimental only; human review; no fabrication | Release |
 
 ---
 

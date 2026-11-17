@@ -65,12 +65,13 @@ are the legality guarantee.
 
 Route the **signal nets** of a from-scratch, unrouted QT Py ESP32-S2 to:
 
-- **0 unconnected**
+- **0 signal-net unconnected**
 - **0 error-level DRC violations**
 - verified by a fresh `kicad-cli pcb drc` run on the saved board
 
 Power/ground planes are handled classically and measured separately. The prior independent
-peak to beat is 8–9 unconnected.
+peak was 8–9 unconnected on the **full board** (including power nets), so the comparison is
+reported with the scope difference, not as a direct win.
 
 ---
 

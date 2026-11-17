@@ -42,6 +42,12 @@ This spec defines a **research router**, not a production autorouter.
 
 The learned levels are **not DRC-exact**. They predict corridors, capacity, and layer allocation. L2 enforces geometry.
 
+**Known limitation — fine-pitch pads.** At 0.5 mm and 0.25 mm, a pad can be smaller than a cell,
+and adjacent pads of different nets can snap to the same cell. Mark these as **multi-net pad
+conflicts**, exclude them from coarse capacity constraints, and let the L2 router resolve the
+fan-out with exact geometry. Phase 2 tests whether 0.25 mm L1 is sufficient; if not, add a
+0.1 mm local window around dense packages (QFN, USB-C) instead of refining the whole board.
+
 ---
 
 ## 3. Routing graph
@@ -79,7 +85,7 @@ A hard routed net is integral flow: `f_n(e) ∈ {0,1}` and conservation holds. T
 | Multiple nets crossing on different layers | Hard to represent | Natural |
 | Shorts / clearance | Cell-level only | Edge/cell capacity |
 | Path extraction | Ambiguous blobs | Flow decomposition |
-| Net identity | Ordinal integer (bad) | Permutation-invariant per-net channels |
+| Net identity | Ordinal integer (bad) | Per-net channels + net-token encoder |
 | DRC mapping | Weak | Direct |
 
 ---
@@ -153,6 +159,7 @@ Input: `obs`, `pad_mask`, `net_feat`, `rules`, plus a learned net embedding broa
 4. **Positional encoding:** learned 2D patch embedding.
 5. **Transformer:** 6 layers, 6 heads, `d_ffn=1536`, pre-norm, GELU.
 6. **Outputs:** global token → `z_context ∈ R^256`; per-patch features for the decoder.
+7. **Net-token encoder:** pool the pad features per net, concatenate `net_feat`, and run a 2-layer transformer over the `N` net tokens (N ≤ 64). This produces a per-net embedding and makes the model **permutation-equivariant** across nets. The global token is the mean of patch + net tokens.
 
 Parameter estimate: 8–12M including the CNN stem.
 
@@ -181,7 +188,7 @@ Deliberately limited capacity. Enso's lesson: if the predictor is too powerful, 
 
 Two heads:
 
-- **L0 flow head:** FiLM-conditioned CNN over the patch grid, upsampled to 36×42, output `[N,L,H,W,E]` and `[N,L-1,H,W]` logits.
+- **L0 flow head:** FiLM-conditioned CNN over the patch grid, upsampled to 36×42, output `[N,L,H,W,E]` and `[N,L-1,H,W]` logits. Each net's output is modulated by its net-token embedding, so the head is shared across nets and permutation-equivariant.
 - **L1 corridor head:** a smaller U-Net conditioned on `z` and the selected net embedding, output `[L,84,72,E]` logits.
 - **Priority head:** a per-net scalar logit from the global token, used as the routing/rip-up order. This is the model's "net ordering" output; it is trained from the label's rip-up difficulty or a simple criticality heuristic (start with net length / congestion).
 

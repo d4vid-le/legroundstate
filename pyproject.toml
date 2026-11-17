@@ -29,6 +29,7 @@ packages = ["src/pcb_enso"]
 [tool.ruff]
 line-length = 120
 target-version = "py313"
+exclude = ["boards", "third_party", ".venv"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "PL", "RUF"]

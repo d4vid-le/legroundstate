@@ -17,8 +17,8 @@ import time
 from dataclasses import asdict, dataclass
 
 import mlx.core as mx
-import mlx.nn as nn
 import mlx.optimizers as optim
+from mlx import nn
 from mlx.utils import tree_flatten
 
 
@@ -48,13 +48,13 @@ def bench_matmul(size: int = 4096, iters: int = 5) -> list[dict]:
     for dtype in (mx.float32, mx.bfloat16):
         a = mx.random.normal((size, size)).astype(dtype)
         b = mx.random.normal((size, size)).astype(dtype)
-        seconds = _time(lambda: a @ b, warmup=2, iters=iters)
+        seconds = _time(lambda a=a, b=b: a @ b, warmup=2, iters=iters)
         out.append(
             {
-                "op": f"matmul {size}^3",
-                "dtype": str(dtype).split(".")[-1],
-                "ms": round(seconds * 1e3, 3),
-                "tflops": round(2 * size**3 / seconds / 1e12, 2),
+                'op': f'matmul {size}^3',
+                'dtype': str(dtype).split('.')[-1],
+                'ms': round(seconds * 1e3, 3),
+                'tflops': round(2 * size**3 / seconds / 1e12, 2),
             }
         )
     return out
@@ -86,7 +86,7 @@ class Encoder(nn.Module):
         return self.head(x)
 
 
-def bench_transformer(
+def bench_transformer(  # noqa: PLR0913
     name: str,
     *,
     batch: int,
@@ -134,35 +134,35 @@ def bench_transformer(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--quick", action="store_true", help="Run only the two main configs")
-    parser.add_argument("--iters", type=int, default=5)
+    parser.add_argument('--quick', action='store_true', help='Run only the two main configs')
+    parser.add_argument('--iters', type=int, default=5)
     args = parser.parse_args()
 
     info = mx.device_info()
-    print("MLX benchmark")
-    print(f"  device: {info.get('device_name')} ({info.get('architecture')})")
-    print(f"  memory: {info.get('memory_size', 0) / 1e9:.1f} GB")
+    print('MLX benchmark')
+    print(f'  device: {info.get("device_name")} ({info.get("architecture")})')
+    print(f'  memory: {info.get("memory_size", 0) / 1e9:.1f} GB')
     print()
 
-    print("Matmul")
+    print('Matmul')
     print(json.dumps(bench_matmul(iters=args.iters), indent=2))
     print()
 
     configs = [
-        ("L0-small", dict(batch=64, tokens=81, d=384, heads=6, layers=6)),
-        ("L0-wide", dict(batch=64, tokens=121, d=512, heads=8, layers=8)),
+        ('L0-small', dict(batch=64, tokens=81, d=384, heads=6, layers=6)),
+        ('L0-wide', dict(batch=64, tokens=121, d=512, heads=8, layers=8)),
     ]
     if not args.quick:
-        configs.append(("L1-patch", dict(batch=32, tokens=378, d=384, heads=6, layers=6)))
+        configs.append(('L1-patch', dict(batch=32, tokens=378, d=384, heads=6, layers=6)))
 
     results = [bench_transformer(name, iters=args.iters, **cfg) for name, cfg in configs]
-    print("Transformer train step (synthetic, mx.compile)")
+    print('Transformer train step (synthetic, mx.compile)')
     for r in results:
         print(json.dumps(asdict(r)))
     print()
-    print("Note: synthetic forward+backward only. Excludes data loading, target encoder,")
-    print("decoder, fine-grid geometry, and KiCad DRC. Treat as an upper bound.")
+    print('Note: synthetic forward+backward only. Excludes data loading, target encoder,')
+    print('decoder, fine-grid geometry, and KiCad DRC. Treat as an upper bound.')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
