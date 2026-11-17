@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Large local data and artifacts
+data/*
+!data/README.md
+artifacts/*
+!artifacts/README.md
+checkpoints/
+logs/
+wandb/
+*.safetensors
+*.npz
+*.npy
+*.h5
+
+# Third-party source (see third_party/README.md)
+third_party/enso/
+third_party/*.zip
+third_party/_enso_tmp/
+
+# Board snapshot: preserve the original history locally, do not commit it
+boards/qt-py-esp32-s2/.git-disabled/
+
+# macOS / editors
+.DS_Store
+*.swp
+.idea/
+.vscode/

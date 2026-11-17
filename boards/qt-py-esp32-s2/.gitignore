@@ -1,0 +1,41 @@
+# Adafruit reference material, imported boards, downloaded PDFs/images.
+# Never redistributed. Reproduce with scripts/fetch-reference.sh.
+reference/
+
+# Third-party tools
+vendor/
+node_modules/
+
+# Secrets
+.env
+*.env
+!/.env.example
+
+# Python
+.venv*/
+__pycache__/
+*.pyc
+
+# KiCad local state
+*.kicad_prl
+*.kicad_pcb-bak
+*-backups/
+.fuse_hidden*
+
+# Logs and junk
+logs/
+*.zip
+.DS_Store
+
+# Gate 2 build noise (renders are copied to renders/)
+rebuild/build.log
+rebuild/svg/
+rebuild/schematic.png
+rebuild/rebuild_netlist.csv
+renders/gate2-schematic.svg
+rebuild/gate3-2d.svg
+rebuild/gate4-pre-route.kicad_pcb
+rebuild/route.dsn
+rebuild/route.ses
+rebuild/freerouting.log
+rebuild/gate4-2d.svg
